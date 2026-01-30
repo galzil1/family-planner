@@ -1,9 +1,9 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, RotateCcw, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
+import { Check, RotateCcw, Calendar, CalendarDays, CalendarRange, Layers } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
-import { RECURRENCE_LABELS } from '@/types';
+import { RECURRENCE_LABELS, DAYS_SHORT } from '@/types';
 
 interface TaskCardProps {
   task: Task;
@@ -75,6 +75,14 @@ export default function TaskCard({
 
   const recurrenceLabel = getRecurrenceLabel();
 
+  // Check if this is a multi-day task
+  const isMultiDay = task.days_of_week && task.days_of_week.length > 1;
+  const multiDayLabel = isMultiDay
+    ? task.days_of_week!.length === 7
+      ? 'כל השבוע'
+      : task.days_of_week!.map(d => DAYS_SHORT[d]).join(' ')
+    : null;
+
   return (
     <div
       className={`group relative rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all ${
@@ -135,6 +143,14 @@ export default function TaskCard({
               <span className="text-[10px] sm:text-xs text-slate-400 truncate">
                 {assignedUser.display_name}
               </span>
+            </div>
+          )}
+
+          {/* Multi-day indicator */}
+          {multiDayLabel && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <Layers className="w-3 h-3 text-cyan-400" />
+              <span className="text-[10px] sm:text-xs text-cyan-400">{multiDayLabel}</span>
             </div>
           )}
 

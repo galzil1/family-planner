@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus, Calendar, ChevronDown } from 'lucide-react';
-import type { Task, User, Category, DayOfWeek, RecurrenceType } from '@/types';
-import { DAYS_OF_WEEK, DAYS_SHORT, RECURRENCE_LABELS } from '@/types';
+import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus, Calendar, ChevronDown, CheckSquare } from 'lucide-react';
+import type { Task, User, Category, DayOfWeek, RecurrenceType, DaySelectionMode } from '@/types';
+import { DAYS_OF_WEEK, DAYS_SHORT, RECURRENCE_LABELS, DAY_SELECTION_LABELS } from '@/types';
 
 interface TaskFormProps {
   familyId: string;
@@ -18,6 +18,8 @@ interface TaskFormProps {
   onUpdated: (task: Task) => void;
   onDeleted: (taskId: string) => void;
 }
+
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
 export default function TaskForm({
   familyId,
@@ -34,16 +36,31 @@ export default function TaskForm({
   const supabase = createClient();
   const isEditing = !!task;
 
+  // Determine initial day selection mode based on existing task
+  const getInitialDaySelectionMode = (): DaySelectionMode => {
+    if (!task) return 'single';
+    const days = task.days_of_week || [task.day_of_week];
+    if (days.length === 7) return 'all';
+    if (days.length > 1) return 'multiple';
+    return 'single';
+  };
+
+  const getInitialSelectedDays = (): number[] => {
+    if (!task) return [dayOfWeek];
+    return task.days_of_week || [task.day_of_week];
+  };
+
   const [title, setTitle] = useState(task?.title || '');
   const [notes, setNotes] = useState(task?.notes || '');
   const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
-  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(
-    (task?.day_of_week as DayOfWeek) ?? dayOfWeek
-  );
   const [reminderTime, setReminderTime] = useState(task?.reminder_time || '');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  
+  // Day selection state
+  const [daySelectionMode, setDaySelectionMode] = useState<DaySelectionMode>(getInitialDaySelectionMode());
+  const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
   
   // Recurrence state
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
@@ -61,6 +78,32 @@ export default function TaskForm({
   const [showRecurrenceOptions, setShowRecurrenceOptions] = useState(
     task?.recurrence_type !== 'none' && task?.recurrence_type !== undefined
   );
+
+  // Handle day selection mode change
+  const handleDayModeChange = (mode: DaySelectionMode) => {
+    setDaySelectionMode(mode);
+    if (mode === 'all') {
+      setSelectedDays([...ALL_DAYS]);
+    } else if (mode === 'single' && selectedDays.length > 1) {
+      setSelectedDays([selectedDays[0]]);
+    }
+  };
+
+  // Toggle a day in multiple selection mode
+  const toggleDay = (day: number) => {
+    if (daySelectionMode === 'single') {
+      setSelectedDays([day]);
+    } else if (daySelectionMode === 'multiple') {
+      if (selectedDays.includes(day)) {
+        if (selectedDays.length > 1) {
+          setSelectedDays(selectedDays.filter(d => d !== day));
+        }
+      } else {
+        setSelectedDays([...selectedDays, day].sort());
+      }
+    }
+    // 'all' mode doesn't allow toggling
+  };
 
   const toggleRecurrenceDay = (day: number) => {
     if (recurrenceDays.includes(day)) {
@@ -84,7 +127,6 @@ export default function TaskForm({
         break;
       case 'weekly':
         summary = recurrenceInterval === 1 ? 'כל שבוע' : `${interval}שבועות`;
-        summary += ` ביום ${DAYS_OF_WEEK[selectedDay]}`;
         break;
       case 'monthly':
         summary = recurrenceInterval === 1 ? 'כל חודש' : `${interval}חודשים`;
@@ -105,6 +147,12 @@ export default function TaskForm({
     return summary;
   };
 
+  const getDaysSummary = (): string => {
+    if (daySelectionMode === 'all') return 'כל השבוע';
+    if (selectedDays.length === 1) return DAYS_OF_WEEK[selectedDays[0]];
+    return selectedDays.map(d => DAYS_SHORT[d]).join(', ');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -112,6 +160,7 @@ export default function TaskForm({
     setLoading(true);
 
     const isRecurring = recurrenceType !== 'none';
+    const daysToSave = daySelectionMode === 'all' ? ALL_DAYS : selectedDays;
     
     const taskData = {
       family_id: familyId,
@@ -119,7 +168,8 @@ export default function TaskForm({
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       category_id: categoryId || null,
-      day_of_week: selectedDay,
+      day_of_week: daysToSave[0], // Keep for backward compatibility
+      days_of_week: daysToSave,
       week_start: weekStart,
       is_recurring: isRecurring,
       recurrence_type: recurrenceType,
@@ -203,26 +253,56 @@ export default function TaskForm({
             />
           </div>
 
-          {/* Day Selector */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
-              יום
-            </label>
-            <div className="grid grid-cols-7 gap-1.5">
-              {DAYS_OF_WEEK.map((day, index) => (
-                <button
-                  key={day}
-                  type="button"
-                  onClick={() => setSelectedDay(index as DayOfWeek)}
-                  className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
-                    selectedDay === index
-                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-                  }`}
-                >
-                  {day}
-                </button>
-              ))}
+          {/* Day Selection Section */}
+          <div className="border border-slate-700/50 rounded-xl overflow-hidden">
+            <div className="px-4 py-3 bg-slate-800/30">
+              <div className="flex items-center gap-3 mb-3">
+                <CheckSquare className="w-5 h-5 text-violet-400" />
+                <span className="font-medium text-slate-300">בחירת ימים</span>
+                <span className="text-xs text-slate-500">({getDaysSummary()})</span>
+              </div>
+              
+              {/* Day Selection Mode Tabs */}
+              <div className="grid grid-cols-3 gap-1.5 mb-3">
+                {(Object.keys(DAY_SELECTION_LABELS) as DaySelectionMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => handleDayModeChange(mode)}
+                    className={`py-2 text-xs font-medium rounded-lg transition-all ${
+                      daySelectionMode === mode
+                        ? 'bg-violet-500 text-white'
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    }`}
+                  >
+                    {DAY_SELECTION_LABELS[mode]}
+                  </button>
+                ))}
+              </div>
+
+              {/* Day Selector */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {DAYS_OF_WEEK.map((day, index) => {
+                  const isSelected = selectedDays.includes(index);
+                  const isDisabled = daySelectionMode === 'all';
+                  
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDay(index)}
+                      disabled={isDisabled}
+                      className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                      } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -396,7 +476,7 @@ export default function TaskForm({
                     {recurrenceType === 'custom' && (
                       <div>
                         <label className="block text-xs font-semibold text-slate-400 mb-2">
-                          בחר ימים
+                          בחר ימים לחזרה
                         </label>
                         <div className="grid grid-cols-7 gap-1.5">
                           {DAYS_SHORT.map((day, index) => (

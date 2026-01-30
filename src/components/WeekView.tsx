@@ -50,9 +50,15 @@ export default function WeekView({
   };
 
   const getTasksForDay = (day: DayOfWeek) => {
-    return tasks.filter(
-      (task) => task.day_of_week === day && task.week_start === weekStart
-    );
+    return tasks.filter((task) => {
+      if (task.week_start !== weekStart) return false;
+      // Check days_of_week array first (new multi-day support)
+      if (task.days_of_week && task.days_of_week.length > 0) {
+        return task.days_of_week.includes(day);
+      }
+      // Fall back to legacy single day_of_week
+      return task.day_of_week === day;
+    });
   };
 
   const handleAddTask = (day: DayOfWeek) => {
@@ -97,9 +103,10 @@ export default function WeekView({
     );
   };
 
-  // Count total tasks and completed
-  const totalTasks = tasks.filter(t => t.week_start === weekStart).length;
-  const completedTasks = tasks.filter(t => t.week_start === weekStart && t.completed).length;
+  // Count unique tasks and completed (not counting duplicates from multi-day tasks)
+  const weekTasks = tasks.filter(t => t.week_start === weekStart);
+  const totalTasks = weekTasks.length;
+  const completedTasks = weekTasks.filter(t => t.completed).length;
 
   return (
     <div className="flex flex-col h-full">

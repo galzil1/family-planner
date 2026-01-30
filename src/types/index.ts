@@ -32,19 +32,29 @@ export interface Task {
   category_id: string | null;
   title: string;
   notes: string | null;
-  day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
+  day_of_week: number; // 0 = Sunday, 1 = Monday, etc. (legacy, for single day)
+  days_of_week: number[] | null; // Array of days (0-6) for multi-day tasks
   week_start: string; // ISO date string of the Sunday of the week
   completed: boolean;
   is_recurring: boolean;
   recurrence_type: RecurrenceType;
   recurrence_interval: number; // e.g., every 2 weeks
-  recurrence_days: number[] | null; // for custom: specific days of week
+  recurrence_days: number[] | null; // for custom recurrence: specific days of week
   recurrence_end_date: string | null; // optional end date
   parent_task_id: string | null; // links to parent recurring task
   reminder_time: string | null;
   created_at: string;
   updated_at: string;
 }
+
+// Day selection mode type
+export type DaySelectionMode = 'single' | 'multiple' | 'all';
+
+export const DAY_SELECTION_LABELS: Record<DaySelectionMode, string> = {
+  single: 'יום אחד',
+  multiple: 'מספר ימים',
+  all: 'כל השבוע',
+};
 
 export interface TaskWithRelations extends Task {
   assigned_user?: User | null;
