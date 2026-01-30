@@ -157,7 +157,7 @@ export default function DashboardPage() {
       }).filter(t => !t.completed);
 
       if (dayTasks.length > 0) {
-        let dayLabel = DAYS_OF_WEEK[futureDayOfWeek];
+        let dayLabel: string = DAYS_OF_WEEK[futureDayOfWeek];
         if (isTomorrow(futureDate)) {
           dayLabel = 'מחר';
         }
