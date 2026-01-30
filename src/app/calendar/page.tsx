@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase';
 import Header from '@/components/Header';
 import CalendarView from '@/components/CalendarView';
 import FloatingAddButton from '@/components/FloatingAddButton';
-import { getWeekStartISO } from '@/lib/date-utils';
 import { Loader2 } from 'lucide-react';
 
 import type { User, Family, Category, Task } from '@/types';
@@ -72,12 +71,11 @@ export default function CalendarPage() {
 
       setCategories(categoriesData || []);
 
-      const weekStart = getWeekStartISO();
+      // Fetch all tasks - filtering is done client-side to support recurrence
       const { data: tasksData } = await supabase
         .from('tasks')
         .select('*')
         .eq('family_id', userData.family_id)
-        .eq('week_start', weekStart)
         .order('day_of_week')
         .order('created_at');
 

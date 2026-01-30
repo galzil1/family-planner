@@ -84,12 +84,11 @@ export default function DashboardPage() {
 
       setCategories(categoriesData || []);
 
-      const weekStart = getWeekStartISO();
+      // Fetch all tasks - filtering is done client-side to support recurrence
       const { data: tasksData } = await supabase
         .from('tasks')
         .select('*')
         .eq('family_id', userData.family_id)
-        .eq('week_start', weekStart)
         .order('day_of_week')
         .order('created_at');
 
