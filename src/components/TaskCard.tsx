@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, Layers } from 'lucide-react';
+import { Check, Layers, Clock } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
 import { DAYS_SHORT } from '@/types';
 
@@ -83,20 +83,33 @@ export default function TaskCard({
             {task.title}
           </p>
 
-          {/* Assignee */}
-          {assignedUser && (
-            <div className="flex items-center gap-1 mt-1">
-              <div
-                className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
-                style={{ backgroundColor: assignedUser.avatar_color }}
-              >
-                {assignedUser.display_name.charAt(0).toUpperCase()}
+          {/* Time & Assignee row */}
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {/* Time */}
+            {task.task_time && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-amber-400" />
+                <span className="text-[10px] text-amber-400 font-medium" dir="ltr">
+                  {task.task_time}
+                </span>
               </div>
-              <span className="text-[10px] text-slate-400 truncate">
-                {assignedUser.display_name}
-              </span>
-            </div>
-          )}
+            )}
+            
+            {/* Assignee */}
+            {assignedUser && (
+              <div className="flex items-center gap-1">
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
+                  style={{ backgroundColor: assignedUser.avatar_color }}
+                >
+                  {assignedUser.display_name.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-[10px] text-slate-400 truncate">
+                  {assignedUser.display_name}
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Multi-day indicator */}
           {multiDayLabel && (

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, Bell, Save, Plus } from 'lucide-react';
+import { X, Trash2, Loader2, Clock, Save, Plus } from 'lucide-react';
 import type { Task, User, Category, DayOfWeek } from '@/types';
 import { DAYS_SHORT } from '@/types';
 
@@ -43,7 +43,7 @@ export default function TaskForm({
   const [notes, setNotes] = useState(task?.notes || '');
   const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
-  const [reminderTime, setReminderTime] = useState(task?.reminder_time || '');
+  const [taskTime, setTaskTime] = useState(task?.task_time || '');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
@@ -88,7 +88,7 @@ export default function TaskForm({
       days_of_week: selectedDays,
       week_start: weekStart,
       is_recurring: false,
-      reminder_time: reminderTime || null,
+      task_time: taskTime || null,
     };
 
     if (isEditing && task) {
@@ -289,19 +289,20 @@ export default function TaskForm({
             />
           </div>
 
-          {/* Reminder */}
+          {/* Time */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              תזכורת
+              שעה
             </label>
             <div className="relative">
-              <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="time"
-                value={reminderTime}
-                onChange={(e) => setReminderTime(e.target.value)}
+                value={taskTime}
+                onChange={(e) => setTaskTime(e.target.value)}
                 className="w-full pr-10 pl-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 dir="ltr"
+                placeholder="--:--"
               />
             </div>
           </div>

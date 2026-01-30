@@ -35,6 +35,7 @@ export interface Task {
   week_start: string; // ISO date string of the Sunday of the week
   completed: boolean;
   is_recurring: boolean;
+  task_time: string | null; // Time for the task (HH:MM format)
   reminder_time: string | null;
   created_at: string;
   updated_at: string;
