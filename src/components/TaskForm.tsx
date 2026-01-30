@@ -36,7 +36,6 @@ export default function TaskForm({
   const supabase = createClient();
   const isEditing = !!task;
 
-  // Determine initial day selection mode based on existing task
   const getInitialDaySelectionMode = (): DaySelectionMode => {
     if (!task) return 'single';
     const days = task.days_of_week || [task.day_of_week];
@@ -58,11 +57,9 @@ export default function TaskForm({
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   
-  // Day selection state
   const [daySelectionMode, setDaySelectionMode] = useState<DaySelectionMode>(getInitialDaySelectionMode());
   const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
   
-  // Recurrence state
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
     task?.recurrence_type || 'none'
   );
@@ -79,7 +76,6 @@ export default function TaskForm({
     task?.recurrence_type !== 'none' && task?.recurrence_type !== undefined
   );
 
-  // Handle day selection mode change
   const handleDayModeChange = (mode: DaySelectionMode) => {
     setDaySelectionMode(mode);
     if (mode === 'all') {
@@ -89,7 +85,6 @@ export default function TaskForm({
     }
   };
 
-  // Toggle a day in multiple selection mode
   const toggleDay = (day: number) => {
     if (daySelectionMode === 'single') {
       setSelectedDays([day]);
@@ -102,7 +97,6 @@ export default function TaskForm({
         setSelectedDays([...selectedDays, day].sort());
       }
     }
-    // 'all' mode doesn't allow toggling
   };
 
   const toggleRecurrenceDay = (day: number) => {
@@ -168,7 +162,7 @@ export default function TaskForm({
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       category_id: categoryId || null,
-      day_of_week: daysToSave[0], // Keep for backward compatibility
+      day_of_week: daysToSave[0],
       days_of_week: daysToSave,
       week_start: weekStart,
       is_recurring: isRecurring,
@@ -220,105 +214,103 @@ export default function TaskForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-xl max-h-[85vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 flex items-center justify-between px-6 py-5 border-b border-slate-800 bg-slate-900 rounded-t-3xl">
-          <h3 className="text-xl font-bold text-white">
+        <div className="sticky top-0 flex items-center justify-between px-5 py-4 border-b border-slate-700 bg-slate-800 rounded-t-2xl">
+          <h3 className="text-lg font-bold text-white">
             {isEditing ? 'עריכת משימה' : 'משימה חדשה'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Title */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               כותרת *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
               placeholder="מה צריך לעשות?"
               required
               autoFocus
             />
           </div>
 
-          {/* Day Selection Section */}
-          <div className="border border-slate-700/50 rounded-xl overflow-hidden">
-            <div className="px-4 py-3 bg-slate-800/30">
-              <div className="flex items-center gap-3 mb-3">
-                <CheckSquare className="w-5 h-5 text-violet-400" />
-                <span className="font-medium text-slate-300">בחירת ימים</span>
-                <span className="text-xs text-slate-500">({getDaysSummary()})</span>
-              </div>
-              
-              {/* Day Selection Mode Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 mb-3">
-                {(Object.keys(DAY_SELECTION_LABELS) as DaySelectionMode[]).map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => handleDayModeChange(mode)}
-                    className={`py-2 text-xs font-medium rounded-lg transition-all ${
-                      daySelectionMode === mode
-                        ? 'bg-violet-500 text-white'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                    }`}
-                  >
-                    {DAY_SELECTION_LABELS[mode]}
-                  </button>
-                ))}
-              </div>
+          {/* Day Selection */}
+          <div className="bg-slate-700/30 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <CheckSquare className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-300">ימים</span>
+              <span className="text-xs text-slate-500">({getDaysSummary()})</span>
+            </div>
+            
+            {/* Mode Tabs */}
+            <div className="grid grid-cols-3 gap-1 mb-2">
+              {(Object.keys(DAY_SELECTION_LABELS) as DaySelectionMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => handleDayModeChange(mode)}
+                  className={`py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    daySelectionMode === mode
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+                >
+                  {DAY_SELECTION_LABELS[mode]}
+                </button>
+              ))}
+            </div>
 
-              {/* Day Selector */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {DAYS_OF_WEEK.map((day, index) => {
-                  const isSelected = selectedDays.includes(index);
-                  const isDisabled = daySelectionMode === 'all';
-                  
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => toggleDay(index)}
-                      disabled={isDisabled}
-                      className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
-                        isSelected
-                          ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
-                      } ${isDisabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                    >
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Day Buttons */}
+            <div className="grid grid-cols-7 gap-1">
+              {DAYS_SHORT.map((day, index) => {
+                const isSelected = selectedDays.includes(index);
+                const isDisabled = daySelectionMode === 'all';
+                
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(index)}
+                    disabled={isDisabled}
+                    className={`py-2 text-xs font-bold rounded-md transition-colors ${
+                      isSelected
+                        ? 'bg-violet-600 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                    } ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Assignee */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               אחראי
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() => setAssignedTo('')}
-                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   !assignedTo
-                    ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                 }`}
               >
                 כולם
@@ -328,19 +320,19 @@ export default function TaskForm({
                   key={member.id}
                   type="button"
                   onClick={() => setAssignedTo(member.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     assignedTo === member.id
-                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                   }`}
                 >
                   <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
                     style={{ backgroundColor: member.avatar_color }}
                   >
                     {member.display_name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="truncate">{member.display_name}</span>
+                  {member.display_name}
                 </button>
               ))}
             </div>
@@ -348,17 +340,17 @@ export default function TaskForm({
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               קטגוריה
             </label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 type="button"
                 onClick={() => setCategoryId('')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   !categoryId
                     ? 'bg-slate-600 text-white'
-                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                    : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                 }`}
               >
                 ללא
@@ -368,19 +360,14 @@ export default function TaskForm({
                   key={cat.id}
                   type="button"
                   onClick={() => setCategoryId(cat.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     categoryId === cat.id
-                      ? 'text-white shadow-lg'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      ? 'text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
                   }`}
-                  style={
-                    categoryId === cat.id
-                      ? { backgroundColor: cat.color }
-                      : undefined
-                  }
+                  style={categoryId === cat.id ? { backgroundColor: cat.color } : undefined}
                 >
-                  <span>{cat.icon}</span>
-                  <span>{cat.name}</span>
+                  {cat.icon} {cat.name}
                 </button>
               ))}
             </div>
@@ -388,130 +375,105 @@ export default function TaskForm({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               הערות
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
               placeholder="פרטים נוספים..."
               rows={2}
             />
           </div>
 
           {/* Recurrence Section */}
-          <div className="border border-slate-700/50 rounded-xl overflow-hidden">
+          <div className="bg-slate-700/30 rounded-lg overflow-hidden">
             <button
               type="button"
               onClick={() => setShowRecurrenceOptions(!showRecurrenceOptions)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/30 hover:bg-slate-800/50 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-700/50 transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <RotateCcw className={`w-5 h-5 ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-500'}`} />
-                <div className="text-right">
-                  <span className={`font-medium ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-300'}`}>
-                    {recurrenceType !== 'none' ? 'חזרה פעילה' : 'הגדרת חזרה'}
-                  </span>
-                  {recurrenceType !== 'none' && (
-                    <p className="text-xs text-slate-400 mt-0.5">{getRecurrenceSummary()}</p>
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                <RotateCcw className={`w-4 h-4 ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-500'}`} />
+                <span className={`text-sm font-medium ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-300'}`}>
+                  {recurrenceType !== 'none' ? 'חזרה פעילה' : 'הגדרת חזרה'}
+                </span>
               </div>
-              <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showRecurrenceOptions ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showRecurrenceOptions ? 'rotate-180' : ''}`} />
             </button>
 
             {showRecurrenceOptions && (
-              <div className="p-4 space-y-4 bg-slate-800/20">
+              <div className="px-3 pb-3 space-y-3">
                 {/* Recurrence Type */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2">
-                    סוג חזרה
-                  </label>
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setRecurrenceType(type)}
-                        className={`py-2 text-xs font-medium rounded-lg transition-all ${
-                          recurrenceType === type
-                            ? 'bg-violet-500 text-white'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                        }`}
-                      >
-                        {RECURRENCE_LABELS[type]}
-                      </button>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-5 gap-1">
+                  {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setRecurrenceType(type)}
+                      className={`py-1.5 text-[10px] font-medium rounded-md transition-colors ${
+                        recurrenceType === type
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                      }`}
+                    >
+                      {RECURRENCE_LABELS[type]}
+                    </button>
+                  ))}
                 </div>
 
                 {recurrenceType !== 'none' && (
                   <>
                     {/* Interval */}
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">
-                        תדירות
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <span className="text-slate-300 text-sm">כל</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="99"
-                          value={recurrenceInterval}
-                          onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                          className="w-16 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        />
-                        <span className="text-slate-300 text-sm">
-                          {recurrenceType === 'daily' && (recurrenceInterval === 1 ? 'יום' : 'ימים')}
-                          {recurrenceType === 'weekly' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
-                          {recurrenceType === 'monthly' && (recurrenceInterval === 1 ? 'חודש' : 'חודשים')}
-                          {recurrenceType === 'custom' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
-                        </span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-300">כל</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={recurrenceInterval}
+                        onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="w-14 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white text-center text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      />
+                      <span className="text-sm text-slate-300">
+                        {recurrenceType === 'daily' && (recurrenceInterval === 1 ? 'יום' : 'ימים')}
+                        {recurrenceType === 'weekly' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
+                        {recurrenceType === 'monthly' && (recurrenceInterval === 1 ? 'חודש' : 'חודשים')}
+                        {recurrenceType === 'custom' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
+                      </span>
                     </div>
 
-                    {/* Custom Days Selection */}
+                    {/* Custom Days */}
                     {recurrenceType === 'custom' && (
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-2">
-                          בחר ימים לחזרה
-                        </label>
-                        <div className="grid grid-cols-7 gap-1.5">
-                          {DAYS_SHORT.map((day, index) => (
-                            <button
-                              key={day}
-                              type="button"
-                              onClick={() => toggleRecurrenceDay(index)}
-                              className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                                recurrenceDays.includes(index)
-                                  ? 'bg-violet-500 text-white'
-                                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                              }`}
-                            >
-                              {day}
-                            </button>
-                          ))}
-                        </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {DAYS_SHORT.map((day, index) => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => toggleRecurrenceDay(index)}
+                            className={`py-1.5 text-xs font-bold rounded-md transition-colors ${
+                              recurrenceDays.includes(index)
+                                ? 'bg-violet-600 text-white'
+                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                            }`}
+                          >
+                            {day}
+                          </button>
+                        ))}
                       </div>
                     )}
 
                     {/* End Date */}
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-2">
-                        תאריך סיום (אופציונלי)
-                      </label>
-                      <div className="relative">
-                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                        <input
-                          type="date"
-                          value={recurrenceEndDate}
-                          onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                          className="w-full pr-10 pl-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
-                          dir="ltr"
-                        />
-                      </div>
+                      <label className="text-xs text-slate-400 mb-1 block">תאריך סיום (אופציונלי)</label>
+                      <input
+                        type="date"
+                        value={recurrenceEndDate}
+                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        dir="ltr"
+                      />
                     </div>
                   </>
                 )}
@@ -521,7 +483,7 @@ export default function TaskForm({
 
           {/* Reminder */}
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               תזכורת
             </label>
             <div className="relative">
@@ -530,27 +492,27 @@ export default function TaskForm({
                 type="time"
                 value={reminderTime}
                 onChange={(e) => setReminderTime(e.target.value)}
-                className="w-full pr-10 pl-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                className="w-full pr-10 pl-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 dir="ltr"
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-3">
+          <div className="flex gap-2 pt-2">
             {isEditing && (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+                className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
                   deleteConfirm
-                    ? 'bg-red-500 text-white'
+                    ? 'bg-red-600 text-white'
                     : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                 }`}
               >
                 <Trash2 className="w-4 h-4" />
-                {deleteConfirm ? 'אישור מחיקה' : 'מחק'}
+                {deleteConfirm ? 'אישור' : 'מחק'}
               </button>
             )}
 
@@ -559,7 +521,7 @@ export default function TaskForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-3 bg-slate-800 text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-700 transition-all"
+              className="px-4 py-2.5 bg-slate-700 text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors"
             >
               ביטול
             </button>
@@ -567,7 +529,7 @@ export default function TaskForm({
             <button
               type="submit"
               disabled={loading || !title.trim()}
-              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-violet-500/25"
+              className="px-4 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-bold hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -576,7 +538,7 @@ export default function TaskForm({
               ) : (
                 <Plus className="w-4 h-4" />
               )}
-              {isEditing ? 'שמור' : 'צור משימה'}
+              {isEditing ? 'שמור' : 'צור'}
             </button>
           </div>
         </form>

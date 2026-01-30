@@ -52,11 +52,9 @@ export default function WeekView({
   const getTasksForDay = (day: DayOfWeek) => {
     return tasks.filter((task) => {
       if (task.week_start !== weekStart) return false;
-      // Check days_of_week array first (new multi-day support)
       if (task.days_of_week && task.days_of_week.length > 0) {
         return task.days_of_week.includes(day);
       }
-      // Fall back to legacy single day_of_week
       return task.day_of_week === day;
     });
   };
@@ -103,7 +101,6 @@ export default function WeekView({
     );
   };
 
-  // Count unique tasks and completed (not counting duplicates from multi-day tasks)
   const weekTasks = tasks.filter(t => t.week_start === weekStart);
   const totalTasks = weekTasks.length;
   const completedTasks = weekTasks.filter(t => t.completed).length;
@@ -111,19 +108,18 @@ export default function WeekView({
   return (
     <div className="flex flex-col h-full">
       {/* Week Navigation */}
-      <div className="flex items-center justify-between mb-6 bg-slate-800/30 rounded-2xl p-4 border border-slate-700/50">
-        <div className="flex items-center gap-2">
-          {/* In RTL, we swap the chevron directions */}
+      <div className="flex items-center justify-between mb-4 bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+        <div className="flex items-center gap-1">
           <button
             onClick={goToNextWeek}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all hover:scale-105"
+            className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
             title="שבוע הבא"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={goToPreviousWeek}
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all hover:scale-105"
+            className="p-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
             title="שבוע קודם"
           >
             <ChevronRight className="w-5 h-5" />
@@ -131,12 +127,12 @@ export default function WeekView({
         </div>
 
         <div className="text-center">
-          <h2 className="text-lg sm:text-xl font-bold text-white">
+          <h2 className="text-base sm:text-lg font-bold text-white">
             {formatWeekRange(weekStart)}
           </h2>
           {totalTasks > 0 && (
-            <p className="text-xs text-slate-400 mt-1">
-              {completedTasks} מתוך {totalTasks} משימות הושלמו
+            <p className="text-xs text-slate-400">
+              {completedTasks}/{totalTasks} הושלמו
             </p>
           )}
         </div>
@@ -144,18 +140,18 @@ export default function WeekView({
         {!isCurrentWeek(weekStart) ? (
           <button
             onClick={goToCurrentWeek}
-            className="px-4 py-2 text-sm font-medium text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-500/20 rounded-xl transition-all flex items-center gap-2"
+            className="px-3 py-1.5 text-sm font-medium text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-500/20 rounded-lg transition-colors flex items-center gap-1.5"
           >
             <Calendar className="w-4 h-4" />
             היום
           </button>
         ) : (
-          <div className="w-20" />
+          <div className="w-16" />
         )}
       </div>
 
       {/* Days Grid */}
-      <div className="grid grid-cols-7 gap-2 sm:gap-3 flex-1 min-h-0">
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 flex-1 min-h-0">
         {DAYS_SHORT.map((day, index) => {
           const dayTasks = getTasksForDay(index as DayOfWeek);
           const isToday = isDayToday(weekStart, index);
@@ -164,36 +160,24 @@ export default function WeekView({
           return (
             <div
               key={day}
-              className={`flex flex-col rounded-2xl border transition-all ${
+              className={`flex flex-col rounded-xl border transition-colors ${
                 isToday
-                  ? 'border-violet-500/50 bg-gradient-to-b from-violet-500/10 to-transparent shadow-lg shadow-violet-500/10'
-                  : 'border-slate-700/50 bg-slate-800/30 hover:border-slate-600/50'
+                  ? 'border-violet-500/50 bg-violet-500/5'
+                  : 'border-slate-700/50 bg-slate-800/30'
               }`}
             >
               {/* Day Header */}
-              <div
-                className={`px-2 sm:px-3 py-3 sm:py-4 border-b ${
-                  isToday ? 'border-violet-500/30' : 'border-slate-700/50'
-                }`}
-              >
+              <div className={`px-2 py-2 sm:py-3 border-b ${isToday ? 'border-violet-500/30' : 'border-slate-700/30'}`}>
                 <div className="text-center">
-                  <div
-                    className={`text-xs sm:text-sm font-bold mb-1 ${
-                      isToday ? 'text-violet-400' : 'text-slate-500'
-                    }`}
-                  >
+                  <div className={`text-xs font-bold mb-0.5 ${isToday ? 'text-violet-400' : 'text-slate-500'}`}>
                     {day}
                   </div>
-                  <div
-                    className={`text-xl sm:text-2xl font-bold ${
-                      isToday ? 'text-white' : 'text-slate-300'
-                    }`}
-                  >
+                  <div className={`text-lg sm:text-xl font-bold ${isToday ? 'text-white' : 'text-slate-300'}`}>
                     {formatDayDate(weekStart, index)}
                   </div>
                   {dayTasks.length > 0 && (
-                    <div className="mt-2 flex justify-center">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    <div className="mt-1">
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
                         completedCount === dayTasks.length
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : 'bg-slate-700/50 text-slate-400'
@@ -206,10 +190,10 @@ export default function WeekView({
               </div>
 
               {/* Tasks */}
-              <div className="flex-1 p-2 sm:p-3 space-y-2 overflow-y-auto">
+              <div className="flex-1 p-1.5 sm:p-2 space-y-1.5 overflow-y-auto">
                 {dayTasks.length === 0 ? (
-                  <div className="text-center py-4">
-                    <p className="text-xs text-slate-600">אין משימות</p>
+                  <div className="text-center py-2">
+                    <p className="text-[10px] text-slate-600">אין משימות</p>
                   </div>
                 ) : (
                   dayTasks.map((task) => (
@@ -226,17 +210,16 @@ export default function WeekView({
               </div>
 
               {/* Add Task Button */}
-              <div className="p-2 sm:p-3 pt-0">
+              <div className="p-1.5 sm:p-2 pt-0">
                 <button
                   onClick={() => handleAddTask(index as DayOfWeek)}
-                  className={`w-full py-2 sm:py-2.5 rounded-xl border border-dashed transition-all flex items-center justify-center gap-1.5 ${
+                  className={`w-full py-1.5 sm:py-2 rounded-lg border border-dashed transition-colors flex items-center justify-center ${
                     isToday
-                      ? 'border-violet-500/50 hover:border-violet-400 text-violet-400 hover:text-violet-300 hover:bg-violet-500/10'
+                      ? 'border-violet-500/50 hover:border-violet-400 text-violet-400 hover:bg-violet-500/10'
                       : 'border-slate-700 hover:border-slate-500 text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
                   }`}
                 >
                   <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline text-xs font-medium">הוסף</span>
                 </button>
               </div>
             </div>

@@ -1,9 +1,9 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, RotateCcw, Calendar, CalendarDays, CalendarRange, Layers } from 'lucide-react';
+import { Check, RotateCcw, Layers } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
-import { RECURRENCE_LABELS, DAYS_SHORT } from '@/types';
+import { DAYS_SHORT } from '@/types';
 
 interface TaskCardProps {
   task: Task;
@@ -26,30 +26,11 @@ export default function TaskCard({
 
   const handleToggle = async () => {
     const newCompleted = !task.completed;
-    
-    // Optimistic update
     onToggleComplete(task.id, newCompleted);
-
-    // Update in database
     await supabase
       .from('tasks')
       .update({ completed: newCompleted })
       .eq('id', task.id);
-  };
-
-  const getRecurrenceIcon = () => {
-    switch (task.recurrence_type) {
-      case 'daily':
-        return <Calendar className="w-3 h-3" />;
-      case 'weekly':
-        return <CalendarDays className="w-3 h-3" />;
-      case 'monthly':
-        return <CalendarRange className="w-3 h-3" />;
-      case 'custom':
-        return <RotateCcw className="w-3 h-3" />;
-      default:
-        return <RotateCcw className="w-3 h-3" />;
-    }
   };
 
   const getRecurrenceLabel = () => {
@@ -69,13 +50,11 @@ export default function TaskCard({
       case 'custom':
         return 'מותאם';
       default:
-        return RECURRENCE_LABELS[task.recurrence_type];
+        return null;
     }
   };
 
   const recurrenceLabel = getRecurrenceLabel();
-
-  // Check if this is a multi-day task
   const isMultiDay = task.days_of_week && task.days_of_week.length > 1;
   const multiDayLabel = isMultiDay
     ? task.days_of_week!.length === 7
@@ -85,62 +64,56 @@ export default function TaskCard({
 
   return (
     <div
-      className={`group relative rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all ${
+      className={`group relative rounded-lg p-2 cursor-pointer transition-colors ${
         task.completed
-          ? 'bg-slate-800/20 opacity-60 hover:opacity-80'
-          : 'bg-slate-800/50 hover:bg-slate-700/50 shadow-sm hover:shadow-md'
+          ? 'bg-slate-700/20 opacity-50'
+          : 'bg-slate-700/40 hover:bg-slate-700/60'
       }`}
       onClick={() => onEdit(task)}
     >
-      {/* Category indicator - on the right for RTL */}
+      {/* Category indicator */}
       {category && (
         <div
-          className="absolute top-0 right-0 w-1 h-full rounded-r-xl"
+          className="absolute top-0 right-0 w-1 h-full rounded-r-lg"
           style={{ backgroundColor: category.color }}
         />
       )}
 
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-2">
         {/* Checkbox */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleToggle();
           }}
-          className={`flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+          className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
             task.completed
-              ? 'bg-emerald-500 border-emerald-500 shadow-sm shadow-emerald-500/30'
-              : 'border-slate-600 hover:border-violet-500 hover:bg-violet-500/10'
+              ? 'bg-emerald-500 border-emerald-500'
+              : 'border-slate-500 hover:border-violet-400'
           }`}
         >
-          {task.completed && <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" />}
+          {task.completed && <Check className="w-3 h-3 text-white" />}
         </button>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            {category && (
-              <span className="text-sm sm:text-base">{category.icon}</span>
-            )}
-            <p
-              className={`text-xs sm:text-sm font-medium leading-tight ${
-                task.completed ? 'text-slate-500 line-through' : 'text-white'
-              }`}
-            >
-              {task.title}
-            </p>
-          </div>
+          <p className={`text-xs font-medium leading-tight ${
+            task.completed ? 'text-slate-500 line-through' : 'text-white'
+          }`}>
+            {category && <span className="ml-1">{category.icon}</span>}
+            {task.title}
+          </p>
 
           {/* Assignee */}
           {assignedUser && (
-            <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="flex items-center gap-1 mt-1">
               <div
-                className="w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[8px] sm:text-[10px] font-bold text-white shadow-sm"
+                className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
                 style={{ backgroundColor: assignedUser.avatar_color }}
               >
                 {assignedUser.display_name.charAt(0).toUpperCase()}
               </div>
-              <span className="text-[10px] sm:text-xs text-slate-400 truncate">
+              <span className="text-[10px] text-slate-400 truncate">
                 {assignedUser.display_name}
               </span>
             </div>
@@ -148,19 +121,17 @@ export default function TaskCard({
 
           {/* Multi-day indicator */}
           {multiDayLabel && (
-            <div className="flex items-center gap-1 mt-1.5">
+            <div className="flex items-center gap-1 mt-1">
               <Layers className="w-3 h-3 text-cyan-400" />
-              <span className="text-[10px] sm:text-xs text-cyan-400">{multiDayLabel}</span>
+              <span className="text-[10px] text-cyan-400">{multiDayLabel}</span>
             </div>
           )}
 
           {/* Recurring indicator */}
           {recurrenceLabel && (
-            <div className="flex items-center gap-1 mt-1.5">
-              <span className="text-violet-400">
-                {getRecurrenceIcon()}
-              </span>
-              <span className="text-[10px] sm:text-xs text-violet-400">{recurrenceLabel}</span>
+            <div className="flex items-center gap-1 mt-1">
+              <RotateCcw className="w-3 h-3 text-violet-400" />
+              <span className="text-[10px] text-violet-400">{recurrenceLabel}</span>
             </div>
           )}
         </div>
