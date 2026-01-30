@@ -49,8 +49,7 @@ export interface Task {
   category_id: string | null;
   title: string;
   notes: string | null;
-  day_of_week: number; // 0 = Sunday, 1 = Monday, etc. (legacy)
-  days_of_week: number[] | null; // Array of days (0-6) for multi-day tasks
+  day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
   week_start: string; // ISO date string of the Sunday of the week
   completed: boolean;
   is_recurring: boolean;
@@ -59,6 +58,8 @@ export interface Task {
   reminder_time: string | null;
   created_at: string;
   updated_at: string;
+  // Deprecated - kept for backward compatibility with existing data
+  days_of_week?: number[] | null;
 }
 
 export interface TaskWithRelations extends Task {

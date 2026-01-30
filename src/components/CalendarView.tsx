@@ -118,20 +118,14 @@ export default function CalendarView({
     }
   };
 
-  // Get tasks for a specific date
+  // Get tasks for a specific date (single day only)
   const getTasksForDate = (date: Date): Task[] => {
     const dayOfWeek = date.getDay();
     const weekStartStr = getWeekStartISO(date);
     
     return tasks.filter((task) => {
-      // Check if task belongs to this week
-      if (task.week_start !== weekStartStr) return false;
-      
-      // Check if task is on this day
-      if (task.days_of_week && task.days_of_week.length > 0) {
-        return task.days_of_week.includes(dayOfWeek);
-      }
-      return task.day_of_week === dayOfWeek;
+      // Check if task belongs to this week and is on this day
+      return task.week_start === weekStartStr && task.day_of_week === dayOfWeek;
     });
   };
 

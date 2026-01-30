@@ -1,9 +1,9 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, Layers, Clock, RotateCcw } from 'lucide-react';
+import { Check, Clock, RotateCcw } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
-import { DAYS_SHORT, RECURRENCE_OPTIONS } from '@/types';
+import { RECURRENCE_OPTIONS } from '@/types';
 
 interface TaskCardProps {
   task: Task;
@@ -32,14 +32,6 @@ export default function TaskCard({
       .update({ completed: newCompleted })
       .eq('id', task.id);
   };
-
-  // Check if this is a multi-day task
-  const isMultiDay = task.days_of_week && task.days_of_week.length > 1;
-  const multiDayLabel = isMultiDay
-    ? task.days_of_week!.length === 7
-      ? 'כל השבוע'
-      : task.days_of_week!.map(d => DAYS_SHORT[d]).join(' ')
-    : null;
 
   return (
     <div
@@ -110,14 +102,6 @@ export default function TaskCard({
               </div>
             )}
           </div>
-
-          {/* Multi-day indicator */}
-          {multiDayLabel && (
-            <div className="flex items-center gap-1 mt-1">
-              <Layers className="w-3 h-3 text-cyan-400" />
-              <span className="text-[10px] text-cyan-400">{multiDayLabel}</span>
-            </div>
-          )}
 
           {/* Recurrence indicator */}
           {task.recurrence_type && task.recurrence_type !== 'none' && (

@@ -34,11 +34,6 @@ export default function TaskForm({
   const supabase = createClient();
   const isEditing = !!task;
 
-  const getInitialSelectedDays = (): number[] => {
-    if (!task) return [dayOfWeek];
-    return task.days_of_week || [task.day_of_week];
-  };
-
   const [title, setTitle] = useState(task?.title || '');
   const [notes, setNotes] = useState(task?.notes || '');
   const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
@@ -47,30 +42,7 @@ export default function TaskForm({
   const [recurrence, setRecurrence] = useState<RecurrenceType>(task?.recurrence_type || 'none');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
-
-  // Toggle day selection
-  const toggleDay = (day: number) => {
-    if (selectedDays.includes(day)) {
-      if (selectedDays.length > 1) {
-        setSelectedDays(selectedDays.filter(d => d !== day));
-      }
-    } else {
-      setSelectedDays([...selectedDays, day].sort());
-    }
-  };
-
-  // Select all days
-  const selectAllDays = () => {
-    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
-  };
-
-  // Get days summary for display
-  const getDaysSummary = (): string => {
-    if (selectedDays.length === 7) return 'כל השבוע';
-    if (selectedDays.length === 1) return DAYS_SHORT[selectedDays[0]];
-    return selectedDays.map(d => DAYS_SHORT[d]).join(', ');
-  };
+  const [selectedDay, setSelectedDay] = useState<number>(task?.day_of_week ?? dayOfWeek);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,8 +56,7 @@ export default function TaskForm({
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       category_id: categoryId || null,
-      day_of_week: selectedDays[0],
-      days_of_week: selectedDays,
+      day_of_week: selectedDay,
       week_start: weekStart,
       is_recurring: recurrence !== 'none',
       recurrence_type: recurrence,
@@ -166,38 +137,26 @@ export default function TaskForm({
             />
           </div>
 
-          {/* Day Selection */}
+          {/* Day Selection - Single Select */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium text-slate-300">
-                ימים ({getDaysSummary()})
-              </label>
-              <button
-                type="button"
-                onClick={selectAllDays}
-                className="text-xs text-violet-400 hover:text-violet-300"
-              >
-                כל השבוע
-              </button>
-            </div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              יום
+            </label>
             <div className="grid grid-cols-7 gap-1">
-              {DAYS_SHORT.map((day, index) => {
-                const isSelected = selectedDays.includes(index);
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => toggleDay(index)}
-                    className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
-                      isSelected
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                    }`}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
+              {DAYS_SHORT.map((day, index) => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => setSelectedDay(index)}
+                  className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
+                    selectedDay === index
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+                >
+                  {day}
+                </button>
+              ))}
             </div>
           </div>
 

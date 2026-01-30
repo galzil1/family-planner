@@ -130,12 +130,7 @@ export default function DashboardPage() {
   const today = new Date();
   const todayDayOfWeek = today.getDay();
   
-  const todayTasks = tasks.filter(t => {
-    if (t.days_of_week && t.days_of_week.length > 0) {
-      return t.days_of_week.includes(todayDayOfWeek);
-    }
-    return t.day_of_week === todayDayOfWeek;
-  });
+  const todayTasks = tasks.filter(t => t.day_of_week === todayDayOfWeek);
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.completed).length;
@@ -149,12 +144,9 @@ export default function DashboardPage() {
       const futureDate = addDays(today, i);
       const futureDayOfWeek = futureDate.getDay();
       
-      const dayTasks = tasks.filter(t => {
-        if (t.days_of_week && t.days_of_week.length > 0) {
-          return t.days_of_week.includes(futureDayOfWeek);
-        }
-        return t.day_of_week === futureDayOfWeek;
-      }).filter(t => !t.completed);
+      const dayTasks = tasks.filter(t => 
+        t.day_of_week === futureDayOfWeek && !t.completed
+      );
 
       if (dayTasks.length > 0) {
         let dayLabel: string = DAYS_OF_WEEK[futureDayOfWeek];
