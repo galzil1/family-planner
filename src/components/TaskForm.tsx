@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, RotateCcw, Bell } from 'lucide-react';
+import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus } from 'lucide-react';
 import type { Task, User, Category, DayOfWeek } from '@/types';
 import { DAYS_OF_WEEK } from '@/types';
 
@@ -73,7 +73,6 @@ export default function TaskForm({
         .single();
 
       if (!error && data) {
-        // If marking as recurring, also create a template
         if (isRecurring && !task.is_recurring) {
           await supabase.from('recurring_templates').insert({
             family_id: familyId,
@@ -96,7 +95,6 @@ export default function TaskForm({
         .single();
 
       if (!error && data) {
-        // If recurring, also create a template
         if (isRecurring) {
           await supabase.from('recurring_templates').insert({
             family_id: familyId,
@@ -128,7 +126,6 @@ export default function TaskForm({
 
     await supabase.from('tasks').delete().eq('id', task.id);
 
-    // If recurring, also delete the template
     if (task.is_recurring) {
       await supabase
         .from('recurring_templates')
@@ -143,34 +140,34 @@ export default function TaskForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-xl animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700/50 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <h3 className="text-lg font-semibold text-white">
-            {isEditing ? 'Edit Task' : 'New Task'}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+          <h3 className="text-xl font-bold text-white">
+            {isEditing ? 'עריכת משימה' : 'משימה חדשה'}
           </h3>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Task Title *
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              כותרת *
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-              placeholder="What needs to be done?"
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+              placeholder="מה צריך לעשות?"
               required
               autoFocus
             />
@@ -178,22 +175,22 @@ export default function TaskForm({
 
           {/* Day Selector */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Day
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              יום
             </label>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5">
               {DAYS_OF_WEEK.map((day, index) => (
                 <button
                   key={day}
                   type="button"
                   onClick={() => setSelectedDay(index as DayOfWeek)}
-                  className={`py-2 text-xs font-medium rounded-lg transition-colors ${
+                  className={`py-2.5 text-xs font-bold rounded-xl transition-all ${
                     selectedDay === index
-                      ? 'bg-violet-500 text-white'
-                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
+                      : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
                   }`}
                 >
-                  {day.slice(0, 3)}
+                  {day}
                 </button>
               ))}
             </div>
@@ -201,29 +198,29 @@ export default function TaskForm({
 
           {/* Assignee */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Assigned To
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              אחראי
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setAssignedTo('')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   !assignedTo
-                    ? 'bg-violet-500 text-white'
+                    ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
               >
-                Anyone
+                כולם
               </button>
               {familyMembers.map((member) => (
                 <button
                   key={member.id}
                   type="button"
                   onClick={() => setAssignedTo(member.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                     assignedTo === member.id
-                      ? 'bg-violet-500 text-white'
+                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
                       : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                 >
@@ -241,29 +238,29 @@ export default function TaskForm({
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Category
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              קטגוריה
             </label>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setCategoryId('')}
-                className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                   !categoryId
-                    ? 'bg-violet-500 text-white'
+                    ? 'bg-slate-600 text-white'
                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
               >
-                None
+                ללא
               </button>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
                   onClick={() => setCategoryId(cat.id)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                     categoryId === cat.id
-                      ? 'text-white'
+                      ? 'text-white shadow-lg'
                       : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                   }`}
                   style={
@@ -281,62 +278,62 @@ export default function TaskForm({
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Notes
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              הערות
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all resize-none"
-              placeholder="Add any extra details..."
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all resize-none"
+              placeholder="פרטים נוספים..."
               rows={2}
             />
           </div>
 
           {/* Recurring & Reminder */}
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={() => setIsRecurring(!isRecurring)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 isRecurring
-                  ? 'bg-violet-500 text-white'
+                  ? 'bg-violet-500 text-white shadow-lg'
                   : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
               }`}
             >
               <RotateCcw className="w-4 h-4" />
-              Recurring
+              חוזר
             </button>
 
             <div className="flex-1">
               <div className="relative">
-                <Bell className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="time"
                   value={reminderTime}
                   onChange={(e) => setReminderTime(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                  placeholder="Reminder"
+                  className="w-full pr-10 pl-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                  dir="ltr"
                 />
               </div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-3">
             {isEditing && (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 ${
+                className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
                   deleteConfirm
                     ? 'bg-red-500 text-white'
                     : 'bg-red-500/10 text-red-400 hover:bg-red-500/20'
                 }`}
               >
                 <Trash2 className="w-4 h-4" />
-                {deleteConfirm ? 'Confirm Delete' : 'Delete'}
+                {deleteConfirm ? 'אישור מחיקה' : 'מחק'}
               </button>
             )}
 
@@ -345,18 +342,24 @@ export default function TaskForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors"
+              className="px-5 py-3 bg-slate-800 text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-700 transition-all"
             >
-              Cancel
+              ביטול
             </button>
 
             <button
               type="submit"
               disabled={loading || !title.trim()}
-              className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-semibold hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl text-sm font-bold hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-lg shadow-violet-500/25"
             >
-              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isEditing ? 'Save Changes' : 'Create Task'}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isEditing ? (
+                <Save className="w-4 h-4" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
+              {isEditing ? 'שמור' : 'צור משימה'}
             </button>
           </div>
         </form>

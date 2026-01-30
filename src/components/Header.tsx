@@ -14,6 +14,7 @@ import {
   Users,
   Copy,
   Check,
+  Home,
 } from 'lucide-react';
 import type { User, Family } from '@/types';
 
@@ -45,37 +46,40 @@ export default function Header({ user, family, familyMembers }: HeaderProps) {
   };
 
   const navItems = [
-    { href: '/dashboard', label: 'Planner', icon: Calendar },
-    { href: '/history', label: 'History', icon: History },
-    { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard', label: 'לוח משימות', icon: Home },
+    { href: '/history', label: 'היסטוריה', icon: History },
+    { href: '/settings', label: 'הגדרות', icon: Settings },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800">
+    <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-xl border-b border-slate-700/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center">
+          <Link href="/dashboard" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 transition-shadow">
               <Calendar className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-white hidden sm:block">
-              {family?.name || 'Family Planner'}
-            </span>
+            <div className="hidden sm:block">
+              <h1 className="font-bold text-white text-lg leading-tight">
+                {family?.name || 'לוח משפחתי'}
+              </h1>
+              <p className="text-xs text-slate-400">תכנון שבועי</p>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 bg-slate-800/50 rounded-xl p-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-violet-500/20 text-violet-300'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                   }`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -88,62 +92,68 @@ export default function Header({ user, family, familyMembers }: HeaderProps) {
           {/* Family Members & User Menu */}
           <div className="flex items-center gap-3">
             {/* Family Members Avatars */}
-            <div className="hidden sm:flex items-center -space-x-2">
-              {familyMembers.slice(0, 3).map((member) => (
+            <div className="hidden sm:flex items-center gap-1">
+              {familyMembers.slice(0, 4).map((member) => (
                 <div
                   key={member.id}
-                  className="w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-white"
+                  className="w-8 h-8 rounded-full border-2 border-slate-800 flex items-center justify-center text-xs font-bold text-white shadow-md hover:scale-110 transition-transform cursor-default"
                   style={{ backgroundColor: member.avatar_color }}
                   title={member.display_name}
                 >
                   {member.display_name.charAt(0).toUpperCase()}
                 </div>
               ))}
+              {familyMembers.length > 4 && (
+                <div className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">
+                  +{familyMembers.length - 4}
+                </div>
+              )}
             </div>
 
             {/* Invite Code Button */}
             {family?.invite_code && (
               <button
                 onClick={copyInviteCode}
-                className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-medium text-slate-400 hover:text-white transition-colors"
-                title="Copy invite code"
+                className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-xs font-medium text-slate-300 hover:text-white transition-all border border-slate-700/50 hover:border-slate-600"
+                title="העתק קוד הזמנה"
               >
                 {copied ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-green-400" />
-                    <span className="text-green-400">Copied!</span>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400">הועתק!</span>
                   </>
                 ) : (
                   <>
-                    <Users className="w-3.5 h-3.5" />
-                    <span className="font-mono">{family.invite_code}</span>
-                    <Copy className="w-3.5 h-3.5" />
+                    <Users className="w-4 h-4" />
+                    <span className="font-mono tracking-wider">{family.invite_code}</span>
+                    <Copy className="w-3.5 h-3.5 opacity-50" />
                   </>
                 )}
               </button>
             )}
 
-            {/* User Avatar */}
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white md:hidden"
-              style={{ backgroundColor: user.avatar_color }}
-            >
-              {user.display_name.charAt(0).toUpperCase()}
-            </button>
-
-            {/* Desktop Sign Out */}
-            <button
-              onClick={handleSignOut}
-              className="hidden md:flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            {/* Desktop User & Sign Out */}
+            <div className="hidden md:flex items-center gap-2">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md"
+                style={{ backgroundColor: user.avatar_color }}
+                title={user.display_name}
+              >
+                {user.display_name.charAt(0).toUpperCase()}
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                title="התנתק"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-slate-400 hover:text-white"
+              className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
             >
               {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -153,7 +163,23 @@ export default function Header({ user, family, familyMembers }: HeaderProps) {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur-xl">
+        <div className="md:hidden border-t border-slate-700/50 bg-slate-900/98 backdrop-blur-xl">
+          {/* User Info */}
+          <div className="px-4 py-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold text-white shadow-lg"
+                style={{ backgroundColor: user.avatar_color }}
+              >
+                {user.display_name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-semibold text-white">{user.display_name}</p>
+                <p className="text-sm text-slate-400">{user.email}</p>
+              </div>
+            </div>
+          </div>
+
           <nav className="px-4 py-3 space-y-1">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -162,10 +188,10 @@ export default function Header({ user, family, familyMembers }: HeaderProps) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive
-                      ? 'bg-violet-500/20 text-violet-300'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 text-violet-300 border border-violet-500/30'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -180,26 +206,28 @@ export default function Header({ user, family, familyMembers }: HeaderProps) {
                 onClick={() => {
                   copyInviteCode();
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
               >
                 <Users className="w-5 h-5" />
-                <span>Invite Code: </span>
-                <span className="font-mono">{family.invite_code}</span>
+                <span>קוד הזמנה: </span>
+                <span className="font-mono tracking-wider">{family.invite_code}</span>
                 {copied ? (
-                  <Check className="w-4 h-4 text-green-400 ml-auto" />
+                  <Check className="w-4 h-4 text-emerald-400 mr-auto" />
                 ) : (
-                  <Copy className="w-4 h-4 ml-auto" />
+                  <Copy className="w-4 h-4 mr-auto opacity-50" />
                 )}
               </button>
             )}
 
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              Sign Out
-            </button>
+            <div className="pt-2 border-t border-slate-800 mt-2">
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+              >
+                <LogOut className="w-5 h-5" />
+                התנתק
+              </button>
+            </div>
           </nav>
         </div>
       )}

@@ -1,33 +1,27 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
+import { Heebo } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
 
-const spaceGrotesk = Space_Grotesk({
+const heebo = Heebo({
   variable: '--font-sans',
-  subsets: ['latin'],
-  display: 'swap',
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-mono',
-  subsets: ['latin'],
+  subsets: ['hebrew', 'latin'],
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Family Planner - Weekly Task Planning Made Simple',
+  title: 'לוח משימות משפחתי - תכנון שבועי פשוט',
   description:
-    'Plan your weekly duties and responsibilities together with your family. Simple, intuitive, and accessible from any device.',
+    'תכננו את המשימות השבועיות שלכם יחד עם המשפחה. פשוט, אינטואיטיבי ונגיש מכל מכשיר.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Family Planner',
+    title: 'לוח משפחתי',
   },
   openGraph: {
-    title: 'Family Planner',
-    description: 'Weekly task planning made simple for families',
+    title: 'לוח משימות משפחתי',
+    description: 'תכנון משימות שבועי פשוט למשפחות',
     type: 'website',
   },
 };
@@ -46,14 +40,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="he" dir="rtl" className="dark">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body
-        className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${heebo.variable} font-sans antialiased`}
       >
         {children}
         <Toaster

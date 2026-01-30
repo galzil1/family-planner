@@ -59,36 +59,33 @@ export interface RecurringTaskTemplate {
 
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
+// Hebrew days - Sunday first (Israeli week)
 export const DAYS_OF_WEEK = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
+  'ראשון',
+  'שני',
+  'שלישי',
+  'רביעי',
+  'חמישי',
+  'שישי',
+  'שבת',
 ] as const;
 
-export const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+export const DAYS_SHORT = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'] as const;
 
-// Default categories with icons and colors
+// Default categories with icons and colors (Hebrew)
 export const DEFAULT_CATEGORIES = [
-  { name: 'Cleaning', color: '#10B981', icon: '🧹' },
-  { name: 'Shopping', color: '#F59E0B', icon: '🛒' },
-  { name: 'Cooking', color: '#EF4444', icon: '🍳' },
-  { name: 'Kids', color: '#8B5CF6', icon: '👶' },
-  { name: 'Work', color: '#3B82F6', icon: '💼' },
-  { name: 'Health', color: '#EC4899', icon: '💪' },
-  { name: 'Finance', color: '#14B8A6', icon: '💰' },
-  { name: 'Other', color: '#6B7280', icon: '📌' },
+  { name: 'ילדים', color: '#8B5CF6', icon: '👶' },
+  { name: 'ספורט', color: '#10B981', icon: '⚽' },
+  { name: 'מטלות בית', color: '#F59E0B', icon: '🏠' },
+  { name: 'אחר', color: '#6B7280', icon: '📌' },
 ] as const;
 
 // Avatar colors for family members
 export const AVATAR_COLORS = [
-  '#3B82F6', // Blue
-  '#EC4899', // Pink
-  '#10B981', // Green
-  '#F59E0B', // Amber
-  '#8B5CF6', // Purple
-  '#EF4444', // Red
+  '#3B82F6', // כחול
+  '#EC4899', // ורוד
+  '#10B981', // ירוק
+  '#F59E0B', // כתום
+  '#8B5CF6', // סגול
+  '#EF4444', // אדום
 ] as const;

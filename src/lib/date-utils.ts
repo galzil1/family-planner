@@ -6,11 +6,11 @@ import {
   format,
   parseISO,
   isToday,
-  isSameDay,
   addDays,
 } from 'date-fns';
+import { he } from 'date-fns/locale';
 
-// Week starts on Sunday (0) - can be configured
+// Week starts on Sunday (0) - Israeli week
 const WEEK_START_DAY = 0; // 0 = Sunday, 1 = Monday
 
 export function getWeekStart(date: Date = new Date()): Date {
@@ -40,14 +40,14 @@ export function formatWeekRange(weekStart: string): string {
   const end = addDays(start, 6);
   
   if (start.getMonth() === end.getMonth()) {
-    return `${format(start, 'MMM d')} - ${format(end, 'd, yyyy')}`;
+    return `${format(start, 'd', { locale: he })} - ${format(end, 'd בMMMM yyyy', { locale: he })}`;
   }
   
   if (start.getFullYear() === end.getFullYear()) {
-    return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+    return `${format(start, 'd בMMMM', { locale: he })} - ${format(end, 'd בMMMM yyyy', { locale: he })}`;
   }
   
-  return `${format(start, 'MMM d, yyyy')} - ${format(end, 'MMM d, yyyy')}`;
+  return `${format(start, 'd בMMMM yyyy', { locale: he })} - ${format(end, 'd בMMMM yyyy', { locale: he })}`;
 }
 
 export function getDayDate(weekStart: string, dayOfWeek: number): Date {
@@ -77,5 +77,5 @@ export function isPastWeek(weekStart: string): boolean {
 
 export function formatDateForHistory(weekStart: string): string {
   const start = parseISO(weekStart);
-  return format(start, 'MMMM d, yyyy');
+  return format(start, 'd בMMMM yyyy', { locale: he });
 }
