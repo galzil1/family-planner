@@ -23,6 +23,8 @@ export interface Category {
   created_at: string;
 }
 
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'custom';
+
 export interface Task {
   id: string;
   family_id: string;
@@ -31,9 +33,14 @@ export interface Task {
   title: string;
   notes: string | null;
   day_of_week: number; // 0 = Sunday, 1 = Monday, etc.
-  week_start: string; // ISO date string of the Monday of the week
+  week_start: string; // ISO date string of the Sunday of the week
   completed: boolean;
   is_recurring: boolean;
+  recurrence_type: RecurrenceType;
+  recurrence_interval: number; // e.g., every 2 weeks
+  recurrence_days: number[] | null; // for custom: specific days of week
+  recurrence_end_date: string | null; // optional end date
+  parent_task_id: string | null; // links to parent recurring task
   reminder_time: string | null;
   created_at: string;
   updated_at: string;
@@ -52,10 +59,23 @@ export interface RecurringTaskTemplate {
   title: string;
   notes: string | null;
   day_of_week: number;
+  recurrence_type: RecurrenceType;
+  recurrence_interval: number;
+  recurrence_days: number[] | null;
+  recurrence_end_date: string | null;
   reminder_time: string | null;
   is_active: boolean;
   created_at: string;
 }
+
+// Recurrence type labels in Hebrew
+export const RECURRENCE_LABELS: Record<RecurrenceType, string> = {
+  none: 'ללא',
+  daily: 'יומי',
+  weekly: 'שבועי',
+  monthly: 'חודשי',
+  custom: 'מותאם אישית',
+};
 
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 

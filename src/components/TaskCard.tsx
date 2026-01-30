@@ -1,8 +1,9 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, RotateCcw } from 'lucide-react';
+import { Check, RotateCcw, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
+import { RECURRENCE_LABELS } from '@/types';
 
 interface TaskCardProps {
   task: Task;
@@ -35,6 +36,44 @@ export default function TaskCard({
       .update({ completed: newCompleted })
       .eq('id', task.id);
   };
+
+  const getRecurrenceIcon = () => {
+    switch (task.recurrence_type) {
+      case 'daily':
+        return <Calendar className="w-3 h-3" />;
+      case 'weekly':
+        return <CalendarDays className="w-3 h-3" />;
+      case 'monthly':
+        return <CalendarRange className="w-3 h-3" />;
+      case 'custom':
+        return <RotateCcw className="w-3 h-3" />;
+      default:
+        return <RotateCcw className="w-3 h-3" />;
+    }
+  };
+
+  const getRecurrenceLabel = () => {
+    if (!task.recurrence_type || task.recurrence_type === 'none') {
+      return task.is_recurring ? 'חוזר' : null;
+    }
+    
+    const interval = task.recurrence_interval || 1;
+    
+    switch (task.recurrence_type) {
+      case 'daily':
+        return interval === 1 ? 'יומי' : `כל ${interval} ימים`;
+      case 'weekly':
+        return interval === 1 ? 'שבועי' : `כל ${interval} שבועות`;
+      case 'monthly':
+        return interval === 1 ? 'חודשי' : `כל ${interval} חודשים`;
+      case 'custom':
+        return 'מותאם';
+      default:
+        return RECURRENCE_LABELS[task.recurrence_type];
+    }
+  };
+
+  const recurrenceLabel = getRecurrenceLabel();
 
   return (
     <div
@@ -100,10 +139,12 @@ export default function TaskCard({
           )}
 
           {/* Recurring indicator */}
-          {task.is_recurring && (
+          {recurrenceLabel && (
             <div className="flex items-center gap-1 mt-1.5">
-              <RotateCcw className="w-3 h-3 text-violet-400" />
-              <span className="text-[10px] sm:text-xs text-violet-400">חוזר</span>
+              <span className="text-violet-400">
+                {getRecurrenceIcon()}
+              </span>
+              <span className="text-[10px] sm:text-xs text-violet-400">{recurrenceLabel}</span>
             </div>
           )}
         </div>

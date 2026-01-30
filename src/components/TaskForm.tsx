@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus } from 'lucide-react';
-import type { Task, User, Category, DayOfWeek } from '@/types';
-import { DAYS_OF_WEEK } from '@/types';
+import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus, Calendar, ChevronDown } from 'lucide-react';
+import type { Task, User, Category, DayOfWeek, RecurrenceType } from '@/types';
+import { DAYS_OF_WEEK, DAYS_SHORT, RECURRENCE_LABELS } from '@/types';
 
 interface TaskFormProps {
   familyId: string;
@@ -41,10 +41,69 @@ export default function TaskForm({
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(
     (task?.day_of_week as DayOfWeek) ?? dayOfWeek
   );
-  const [isRecurring, setIsRecurring] = useState(task?.is_recurring || false);
   const [reminderTime, setReminderTime] = useState(task?.reminder_time || '');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  
+  // Recurrence state
+  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
+    task?.recurrence_type || 'none'
+  );
+  const [recurrenceInterval, setRecurrenceInterval] = useState(
+    task?.recurrence_interval || 1
+  );
+  const [recurrenceDays, setRecurrenceDays] = useState<number[]>(
+    task?.recurrence_days || [dayOfWeek]
+  );
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState(
+    task?.recurrence_end_date || ''
+  );
+  const [showRecurrenceOptions, setShowRecurrenceOptions] = useState(
+    task?.recurrence_type !== 'none' && task?.recurrence_type !== undefined
+  );
+
+  const toggleRecurrenceDay = (day: number) => {
+    if (recurrenceDays.includes(day)) {
+      if (recurrenceDays.length > 1) {
+        setRecurrenceDays(recurrenceDays.filter(d => d !== day));
+      }
+    } else {
+      setRecurrenceDays([...recurrenceDays, day].sort());
+    }
+  };
+
+  const getRecurrenceSummary = (): string => {
+    if (recurrenceType === 'none') return '';
+    
+    let summary = '';
+    const interval = recurrenceInterval > 1 ? `כל ${recurrenceInterval} ` : 'כל ';
+    
+    switch (recurrenceType) {
+      case 'daily':
+        summary = recurrenceInterval === 1 ? 'כל יום' : `כל ${recurrenceInterval} ימים`;
+        break;
+      case 'weekly':
+        summary = recurrenceInterval === 1 ? 'כל שבוע' : `${interval}שבועות`;
+        summary += ` ביום ${DAYS_OF_WEEK[selectedDay]}`;
+        break;
+      case 'monthly':
+        summary = recurrenceInterval === 1 ? 'כל חודש' : `${interval}חודשים`;
+        break;
+      case 'custom':
+        const days = recurrenceDays.map(d => DAYS_SHORT[d]).join(', ');
+        summary = `בימים: ${days}`;
+        if (recurrenceInterval > 1) {
+          summary += ` (כל ${recurrenceInterval} שבועות)`;
+        }
+        break;
+    }
+    
+    if (recurrenceEndDate) {
+      summary += ` עד ${new Date(recurrenceEndDate).toLocaleDateString('he-IL')}`;
+    }
+    
+    return summary;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +111,8 @@ export default function TaskForm({
 
     setLoading(true);
 
+    const isRecurring = recurrenceType !== 'none';
+    
     const taskData = {
       family_id: familyId,
       title: title.trim(),
@@ -61,6 +122,10 @@ export default function TaskForm({
       day_of_week: selectedDay,
       week_start: weekStart,
       is_recurring: isRecurring,
+      recurrence_type: recurrenceType,
+      recurrence_interval: recurrenceInterval,
+      recurrence_days: recurrenceType === 'custom' ? recurrenceDays : null,
+      recurrence_end_date: recurrenceEndDate || null,
       reminder_time: reminderTime || null,
     };
 
@@ -73,18 +138,6 @@ export default function TaskForm({
         .single();
 
       if (!error && data) {
-        if (isRecurring && !task.is_recurring) {
-          await supabase.from('recurring_templates').insert({
-            family_id: familyId,
-            title: title.trim(),
-            notes: notes.trim() || null,
-            assigned_to: assignedTo || null,
-            category_id: categoryId || null,
-            day_of_week: selectedDay,
-            reminder_time: reminderTime || null,
-            is_active: true,
-          });
-        }
         onUpdated(data);
       }
     } else {
@@ -95,18 +148,6 @@ export default function TaskForm({
         .single();
 
       if (!error && data) {
-        if (isRecurring) {
-          await supabase.from('recurring_templates').insert({
-            family_id: familyId,
-            title: title.trim(),
-            notes: notes.trim() || null,
-            assigned_to: assignedTo || null,
-            category_id: categoryId || null,
-            day_of_week: selectedDay,
-            reminder_time: reminderTime || null,
-            is_active: true,
-          });
-        }
         onCreated(data);
       }
     }
@@ -123,27 +164,16 @@ export default function TaskForm({
     }
 
     setLoading(true);
-
     await supabase.from('tasks').delete().eq('id', task.id);
-
-    if (task.is_recurring) {
-      await supabase
-        .from('recurring_templates')
-        .delete()
-        .eq('family_id', familyId)
-        .eq('title', task.title)
-        .eq('day_of_week', task.day_of_week);
-    }
-
     onDeleted(task.id);
     setLoading(false);
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-700/50 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-lg bg-slate-900 border border-slate-700/50 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+        <div className="sticky top-0 flex items-center justify-between px-6 py-5 border-b border-slate-800 bg-slate-900 rounded-t-3xl">
           <h3 className="text-xl font-bold text-white">
             {isEditing ? 'עריכת משימה' : 'משימה חדשה'}
           </h3>
@@ -290,32 +320,139 @@ export default function TaskForm({
             />
           </div>
 
-          {/* Recurring & Reminder */}
-          <div className="flex gap-3">
+          {/* Recurrence Section */}
+          <div className="border border-slate-700/50 rounded-xl overflow-hidden">
             <button
               type="button"
-              onClick={() => setIsRecurring(!isRecurring)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                isRecurring
-                  ? 'bg-violet-500 text-white shadow-lg'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-              }`}
+              onClick={() => setShowRecurrenceOptions(!showRecurrenceOptions)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-slate-800/30 hover:bg-slate-800/50 transition-colors"
             >
-              <RotateCcw className="w-4 h-4" />
-              חוזר
+              <div className="flex items-center gap-3">
+                <RotateCcw className={`w-5 h-5 ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-500'}`} />
+                <div className="text-right">
+                  <span className={`font-medium ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-300'}`}>
+                    {recurrenceType !== 'none' ? 'חזרה פעילה' : 'הגדרת חזרה'}
+                  </span>
+                  {recurrenceType !== 'none' && (
+                    <p className="text-xs text-slate-400 mt-0.5">{getRecurrenceSummary()}</p>
+                  )}
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${showRecurrenceOptions ? 'rotate-180' : ''}`} />
             </button>
 
-            <div className="flex-1">
-              <div className="relative">
-                <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="time"
-                  value={reminderTime}
-                  onChange={(e) => setReminderTime(e.target.value)}
-                  className="w-full pr-10 pl-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
-                  dir="ltr"
-                />
+            {showRecurrenceOptions && (
+              <div className="p-4 space-y-4 bg-slate-800/20">
+                {/* Recurrence Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-2">
+                    סוג חזרה
+                  </label>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setRecurrenceType(type)}
+                        className={`py-2 text-xs font-medium rounded-lg transition-all ${
+                          recurrenceType === type
+                            ? 'bg-violet-500 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                        }`}
+                      >
+                        {RECURRENCE_LABELS[type]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {recurrenceType !== 'none' && (
+                  <>
+                    {/* Interval */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-2">
+                        תדירות
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-300 text-sm">כל</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="99"
+                          value={recurrenceInterval}
+                          onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
+                          className="w-16 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-violet-500"
+                        />
+                        <span className="text-slate-300 text-sm">
+                          {recurrenceType === 'daily' && (recurrenceInterval === 1 ? 'יום' : 'ימים')}
+                          {recurrenceType === 'weekly' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
+                          {recurrenceType === 'monthly' && (recurrenceInterval === 1 ? 'חודש' : 'חודשים')}
+                          {recurrenceType === 'custom' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Custom Days Selection */}
+                    {recurrenceType === 'custom' && (
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-400 mb-2">
+                          בחר ימים
+                        </label>
+                        <div className="grid grid-cols-7 gap-1.5">
+                          {DAYS_SHORT.map((day, index) => (
+                            <button
+                              key={day}
+                              type="button"
+                              onClick={() => toggleRecurrenceDay(index)}
+                              className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                                recurrenceDays.includes(index)
+                                  ? 'bg-violet-500 text-white'
+                                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                              }`}
+                            >
+                              {day}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* End Date */}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-400 mb-2">
+                        תאריך סיום (אופציונלי)
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                          type="date"
+                          value={recurrenceEndDate}
+                          onChange={(e) => setRecurrenceEndDate(e.target.value)}
+                          className="w-full pr-10 pl-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
+            )}
+          </div>
+
+          {/* Reminder */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-300 mb-2">
+              תזכורת
+            </label>
+            <div className="relative">
+              <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="time"
+                value={reminderTime}
+                onChange={(e) => setReminderTime(e.target.value)}
+                className="w-full pr-10 pl-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                dir="ltr"
+              />
             </div>
           </div>
 
