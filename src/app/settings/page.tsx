@@ -9,7 +9,7 @@ import {
   requestNotificationPermission,
   getNotificationPermissionStatus,
 } from '@/lib/notifications';
-import { Bell, BellOff, User, Palette, Save, Loader2 } from 'lucide-react';
+import { Bell, BellOff, User, Palette, Save, Loader2, Users, Copy, Check } from 'lucide-react';
 import { AVATAR_COLORS } from '@/types';
 import type { User as UserType, Family, Category } from '@/types';
 
@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [notificationStatus, setNotificationStatus] = useState<
     NotificationPermission | 'unsupported'
   >('default');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -113,6 +114,14 @@ export default function SettingsPage() {
     }
   };
 
+  const handleCopyInviteCode = async () => {
+    if (family?.invite_code) {
+      await navigator.clipboard.writeText(family.invite_code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 flex items-center justify-center">
@@ -187,6 +196,76 @@ export default function SettingsPage() {
               )}
               Save Profile
             </button>
+          </div>
+        </section>
+
+        {/* Family Section */}
+        <section className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <Users className="w-5 h-5 text-violet-400" />
+            משפחה
+          </h2>
+
+          <div className="space-y-4">
+            {/* Family Name */}
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-1">
+                שם המשפחה
+              </label>
+              <p className="text-white font-medium">{family?.name}</p>
+            </div>
+
+            {/* Invite Code */}
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2">
+                קוד הזמנה
+              </label>
+              <p className="text-xs text-slate-500 mb-2">
+                שתף את הקוד הזה עם בני משפחה כדי שיוכלו להצטרף
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl font-mono text-lg text-violet-300 tracking-wider">
+                  {family?.invite_code}
+                </div>
+                <button
+                  onClick={handleCopyInviteCode}
+                  className={`p-3 rounded-xl transition-all ${
+                    copied
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-violet-500/20 text-violet-300 hover:bg-violet-500/30'
+                  }`}
+                  title="העתק קוד"
+                >
+                  {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Family Members */}
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-2">
+                בני משפחה ({familyMembers.length})
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {familyMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-900/50 border border-slate-700 rounded-lg"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                      style={{ backgroundColor: member.avatar_color }}
+                    >
+                      {member.display_name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-white text-sm">{member.display_name}</span>
+                    {member.id === user?.id && (
+                      <span className="text-xs text-slate-500">(את/ה)</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
