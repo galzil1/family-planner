@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
-import { format, addDays, addWeeks, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday as isDateToday, parseISO } from 'date-fns';
+import { format, addDays, addWeeks, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday as isDateToday, parseISO, differenceInWeeks, differenceInMonths, getDate } from 'date-fns';
 import { he } from 'date-fns/locale';
 import {
   getWeekStartISO,
@@ -118,14 +118,57 @@ export default function CalendarView({
     }
   };
 
-  // Get tasks for a specific date (single day only)
+  // Get tasks for a specific date, handling recurrence
   const getTasksForDate = (date: Date): Task[] => {
     const dayOfWeek = date.getDay();
     const weekStartStr = getWeekStartISO(date);
+    const dateOfMonth = getDate(date);
     
     return tasks.filter((task) => {
-      // Check if task belongs to this week and is on this day
-      return task.week_start === weekStartStr && task.day_of_week === dayOfWeek;
+      const taskWeekStart = parseISO(task.week_start);
+      const taskDateOfMonth = getDate(taskWeekStart) + task.day_of_week; // Approximate day of month when task was created
+      
+      // Non-recurring task: must match exact week and day
+      if (!task.recurrence_type || task.recurrence_type === 'none') {
+        return task.week_start === weekStartStr && task.day_of_week === dayOfWeek;
+      }
+      
+      // Task must be on or after the original week
+      if (date < taskWeekStart) {
+        return false;
+      }
+      
+      // Handle different recurrence types
+      switch (task.recurrence_type) {
+        case 'daily':
+          // Daily tasks appear every day from their start date
+          return true;
+          
+        case 'weekly':
+          // Weekly tasks appear on the same day of week every week
+          return task.day_of_week === dayOfWeek;
+          
+        case 'biweekly':
+          // Bi-weekly tasks appear every 2 weeks on the same day
+          if (task.day_of_week !== dayOfWeek) return false;
+          const weeksDiff = differenceInWeeks(getWeekStart(date), taskWeekStart);
+          return weeksDiff >= 0 && weeksDiff % 2 === 0;
+          
+        case 'monthly':
+          // Monthly tasks appear on the same day of week in the same week position
+          // e.g., "2nd Tuesday of month" or simply same date each month
+          // For simplicity: same day of week, check if it's roughly the same week of month
+          if (task.day_of_week !== dayOfWeek) return false;
+          const monthsDiff = differenceInMonths(date, taskWeekStart);
+          if (monthsDiff < 0) return false;
+          // Check if it's approximately the same week of the month
+          const originalWeekOfMonth = Math.floor((getDate(taskWeekStart) + task.day_of_week - 1) / 7);
+          const currentWeekOfMonth = Math.floor((dateOfMonth - 1) / 7);
+          return originalWeekOfMonth === currentWeekOfMonth;
+          
+        default:
+          return false;
+      }
     });
   };
 

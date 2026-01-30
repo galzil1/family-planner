@@ -17,7 +17,8 @@ import {
   Users,
   Clock
 } from 'lucide-react';
-import { format, isToday, isTomorrow, addDays } from 'date-fns';
+import { format, isToday, isTomorrow, addDays, parseISO, differenceInWeeks, getDate } from 'date-fns';
+import { getWeekStart } from '@/lib/date-utils';
 import { he } from 'date-fns/locale';
 
 import type { User, Family, Category, Task } from '@/types';
@@ -126,11 +127,51 @@ export default function DashboardPage() {
   }
 
   // Calculate stats
-  const weekStart = getWeekStartISO();
+  const weekStartISO = getWeekStartISO();
   const today = new Date();
   const todayDayOfWeek = today.getDay();
   
-  const todayTasks = tasks.filter(t => t.day_of_week === todayDayOfWeek);
+  // Helper function to check if a task should appear on a given date
+  const taskAppearsOnDate = (task: Task, date: Date): boolean => {
+    const dayOfWeek = date.getDay();
+    const taskWeekStart = parseISO(task.week_start);
+    const dateOfMonth = getDate(date);
+    
+    // Non-recurring task: must match exact week and day
+    if (!task.recurrence_type || task.recurrence_type === 'none') {
+      return task.week_start === getWeekStartISO(date) && task.day_of_week === dayOfWeek;
+    }
+    
+    // Task must be on or after the original week
+    if (date < taskWeekStart) {
+      return false;
+    }
+    
+    // Handle different recurrence types
+    switch (task.recurrence_type) {
+      case 'daily':
+        return true;
+        
+      case 'weekly':
+        return task.day_of_week === dayOfWeek;
+        
+      case 'biweekly':
+        if (task.day_of_week !== dayOfWeek) return false;
+        const weeksDiff = differenceInWeeks(getWeekStart(date), taskWeekStart);
+        return weeksDiff >= 0 && weeksDiff % 2 === 0;
+        
+      case 'monthly':
+        if (task.day_of_week !== dayOfWeek) return false;
+        const originalWeekOfMonth = Math.floor((getDate(taskWeekStart) + task.day_of_week - 1) / 7);
+        const currentWeekOfMonth = Math.floor((dateOfMonth - 1) / 7);
+        return originalWeekOfMonth === currentWeekOfMonth;
+        
+      default:
+        return false;
+    }
+  };
+  
+  const todayTasks = tasks.filter(t => taskAppearsOnDate(t, today));
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.completed).length;
@@ -145,7 +186,7 @@ export default function DashboardPage() {
       const futureDayOfWeek = futureDate.getDay();
       
       const dayTasks = tasks.filter(t => 
-        t.day_of_week === futureDayOfWeek && !t.completed
+        taskAppearsOnDate(t, futureDate) && !t.completed
       );
 
       if (dayTasks.length > 0) {
