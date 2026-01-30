@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import Header from '@/components/Header';
-import WeekView from '@/components/WeekView';
+import CalendarView from '@/components/CalendarView';
 import FloatingAddButton from '@/components/FloatingAddButton';
 import { getWeekStartISO } from '@/lib/date-utils';
 import { Loader2 } from 'lucide-react';
@@ -114,12 +114,13 @@ export default function CalendarPage() {
     <div className="min-h-screen bg-slate-900">
       <Header user={user} family={family} familyMembers={familyMembers} />
       <main className="container mx-auto px-4 py-6">
-        <WeekView
+        <CalendarView
           user={user}
           family={family}
           familyMembers={familyMembers}
           categories={categories}
           initialTasks={tasks}
+          onTasksChange={loadData}
         />
       </main>
       <FloatingAddButton

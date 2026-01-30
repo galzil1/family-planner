@@ -23,6 +23,25 @@ export interface Category {
   created_at: string;
 }
 
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
+  { value: 'none', label: 'ללא' },
+  { value: 'daily', label: 'יומי' },
+  { value: 'weekly', label: 'שבועי' },
+  { value: 'biweekly', label: 'דו-שבועי' },
+  { value: 'monthly', label: 'חודשי' },
+];
+
+export type ViewMode = 'daily' | 'weekly' | 'biweekly' | 'monthly';
+
+export const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
+  { value: 'daily', label: 'יום' },
+  { value: 'weekly', label: 'שבוע' },
+  { value: 'biweekly', label: 'שבועיים' },
+  { value: 'monthly', label: 'חודש' },
+];
+
 export interface Task {
   id: string;
   family_id: string;
@@ -35,6 +54,7 @@ export interface Task {
   week_start: string; // ISO date string of the Sunday of the week
   completed: boolean;
   is_recurring: boolean;
+  recurrence_type: RecurrenceType | null;
   task_time: string | null; // Time for the task (HH:MM format)
   reminder_time: string | null;
   created_at: string;

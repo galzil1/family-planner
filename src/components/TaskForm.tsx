@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, Clock, Save, Plus } from 'lucide-react';
-import type { Task, User, Category, DayOfWeek } from '@/types';
-import { DAYS_SHORT } from '@/types';
+import { X, Trash2, Loader2, Clock, Save, Plus, RotateCcw } from 'lucide-react';
+import type { Task, User, Category, DayOfWeek, RecurrenceType } from '@/types';
+import { DAYS_SHORT, RECURRENCE_OPTIONS } from '@/types';
 
 interface TaskFormProps {
   familyId: string;
@@ -44,6 +44,7 @@ export default function TaskForm({
   const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
   const [taskTime, setTaskTime] = useState(task?.task_time || '');
+  const [recurrence, setRecurrence] = useState<RecurrenceType>(task?.recurrence_type || 'none');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
@@ -51,7 +52,6 @@ export default function TaskForm({
   // Toggle day selection
   const toggleDay = (day: number) => {
     if (selectedDays.includes(day)) {
-      // Don't allow removing the last day
       if (selectedDays.length > 1) {
         setSelectedDays(selectedDays.filter(d => d !== day));
       }
@@ -84,10 +84,11 @@ export default function TaskForm({
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       category_id: categoryId || null,
-      day_of_week: selectedDays[0], // Keep for backward compatibility
+      day_of_week: selectedDays[0],
       days_of_week: selectedDays,
       week_start: weekStart,
-      is_recurring: false,
+      is_recurring: recurrence !== 'none',
+      recurrence_type: recurrence,
       task_time: taskTime || null,
     };
 
@@ -200,6 +201,47 @@ export default function TaskForm({
             </div>
           </div>
 
+          {/* Time */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              שעה
+            </label>
+            <div className="relative">
+              <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <input
+                type="time"
+                value={taskTime}
+                onChange={(e) => setTaskTime(e.target.value)}
+                className="w-full pr-10 pl-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          {/* Recurrence */}
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              <RotateCcw className="w-4 h-4 inline ml-1" />
+              חזרה
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {RECURRENCE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setRecurrence(option.value)}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    recurrence === option.value
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Assignee */}
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -287,24 +329,6 @@ export default function TaskForm({
               placeholder="פרטים נוספים..."
               rows={2}
             />
-          </div>
-
-          {/* Time */}
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              שעה
-            </label>
-            <div className="relative">
-              <Clock className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input
-                type="time"
-                value={taskTime}
-                onChange={(e) => setTaskTime(e.target.value)}
-                className="w-full pr-10 pl-3 py-2.5 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                dir="ltr"
-                placeholder="--:--"
-              />
-            </div>
           </div>
 
           {/* Actions */}
