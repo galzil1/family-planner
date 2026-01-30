@@ -30,13 +30,13 @@ export default function FloatingAddButton({
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* Floating Action Button - positioned above bottom nav on mobile */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-6 left-6 z-40 w-14 h-14 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-110 transition-all flex items-center justify-center group"
+        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-40 w-14 h-14 md:w-14 md:h-14 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 active:scale-95 md:hover:scale-110 transition-all flex items-center justify-center group"
         aria-label="הוסף משימה"
       >
-        <Plus className="w-7 h-7 text-white group-hover:rotate-90 transition-transform" />
+        <Plus className="w-7 h-7 text-white md:group-hover:rotate-90 transition-transform" />
       </button>
 
       {/* Task Form Modal */}

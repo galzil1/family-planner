@@ -225,49 +225,49 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-slate-900">
       <Header user={user} family={family} familyMembers={familyMembers} />
       
-      <main className="container mx-auto px-4 py-6 pb-24">
+      <main className="container mx-auto px-4 py-6 pb-28 md:pb-6">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-1">
+        <div className="mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
             שלום, {user.display_name} 👋
           </h1>
-          <p className="text-slate-400">
+          <p className="text-slate-400 text-sm sm:text-base">
             {format(today, 'EEEE, d בMMMM', { locale: he })}
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6">
           <Link
             href="/calendar"
-            className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl hover:bg-slate-800 transition-colors group"
+            className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl hover:bg-slate-800 active:bg-slate-700 transition-colors group"
           >
-            <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center group-hover:bg-violet-500/30 transition-colors">
-              <Calendar className="w-6 h-6 text-violet-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-500/20 flex items-center justify-center group-hover:bg-violet-500/30 transition-colors">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-violet-400" />
             </div>
-            <div>
-              <p className="font-semibold text-white">לוח שבועי</p>
-              <p className="text-sm text-slate-400">צפה בכל המשימות</p>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-white text-sm sm:text-base">לוח שבועי</p>
+              <p className="text-xs sm:text-sm text-slate-400 truncate">צפה בכל המשימות</p>
             </div>
-            <ArrowLeft className="w-5 h-5 text-slate-500 mr-auto" />
+            <ArrowLeft className="w-5 h-5 text-slate-500 hidden sm:block" />
           </Link>
 
           <div className="flex items-center gap-3 p-4 bg-slate-800/50 border border-slate-700/50 rounded-2xl">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-emerald-400" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
             </div>
             <div>
-              <p className="font-semibold text-white">{progressPercent}%</p>
-              <p className="text-sm text-slate-400">השבוע הושלם</p>
+              <p className="font-semibold text-white text-lg sm:text-xl">{progressPercent}%</p>
+              <p className="text-xs sm:text-sm text-slate-400">השבוע הושלם</p>
             </div>
           </div>
         </div>
 
         {/* Weekly Progress */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 mb-6">
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 sm:p-5 mb-5">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-white">התקדמות שבועית</h2>
-            <span className="text-sm text-slate-400">{completedTasks} מתוך {totalTasks}</span>
+            <h2 className="font-semibold text-white text-sm sm:text-base">התקדמות שבועית</h2>
+            <span className="text-xs sm:text-sm text-slate-400">{completedTasks} מתוך {totalTasks}</span>
           </div>
           <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
             <div 
@@ -278,17 +278,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Today's Tasks */}
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 mb-6">
+        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-4 sm:p-5 mb-5">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-violet-400" />
-            <h2 className="font-semibold text-white">משימות להיום</h2>
+            <h2 className="font-semibold text-white text-sm sm:text-base">משימות להיום</h2>
             <span className="text-xs bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
               {todayTasks.filter(t => !t.completed).length} נותרו
             </span>
           </div>
 
           {todayTasks.length === 0 ? (
-            <p className="text-slate-500 text-center py-4">אין משימות להיום 🎉</p>
+            <p className="text-slate-500 text-center py-6">אין משימות להיום 🎉</p>
           ) : (
             <div className="space-y-2">
               {todayTasks.map(task => {
@@ -298,23 +298,23 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={task.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      task.completed ? 'bg-slate-700/30 opacity-60' : 'bg-slate-700/50 hover:bg-slate-700'
+                    className={`flex items-center gap-3 p-3 sm:p-3 rounded-xl transition-colors ${
+                      task.completed ? 'bg-slate-700/30 opacity-60' : 'bg-slate-700/50 hover:bg-slate-700 active:bg-slate-600'
                     }`}
                   >
                     <button
                       onClick={() => toggleTaskComplete(task.id, !task.completed)}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 p-1 -m-1 active:scale-90 transition-transform"
                     >
                       {task.completed ? (
-                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                        <CheckCircle2 className="w-7 h-7 sm:w-6 sm:h-6 text-emerald-400" />
                       ) : (
-                        <Circle className="w-6 h-6 text-slate-500 hover:text-violet-400 transition-colors" />
+                        <Circle className="w-7 h-7 sm:w-6 sm:h-6 text-slate-500 hover:text-violet-400 active:text-violet-400 transition-colors" />
                       )}
                     </button>
                     
                     <div className="flex-1 min-w-0">
-                      <p className={`font-medium ${task.completed ? 'text-slate-500 line-through' : 'text-white'}`}>
+                      <p className={`font-medium text-sm sm:text-base ${task.completed ? 'text-slate-500 line-through' : 'text-white'}`}>
                         {category?.icon} {task.title}
                       </p>
                       {assignee && (
