@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, RotateCcw, Bell, Save, Plus, Calendar, ChevronDown, CheckSquare } from 'lucide-react';
-import type { Task, User, Category, DayOfWeek, RecurrenceType, DaySelectionMode } from '@/types';
-import { DAYS_OF_WEEK, DAYS_SHORT, RECURRENCE_LABELS, DAY_SELECTION_LABELS } from '@/types';
+import { X, Trash2, Loader2, Bell, Save, Plus } from 'lucide-react';
+import type { Task, User, Category, DayOfWeek } from '@/types';
+import { DAYS_SHORT } from '@/types';
 
 interface TaskFormProps {
   familyId: string;
@@ -18,8 +18,6 @@ interface TaskFormProps {
   onUpdated: (task: Task) => void;
   onDeleted: (taskId: string) => void;
 }
-
-const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
 export default function TaskForm({
   familyId,
@@ -36,14 +34,6 @@ export default function TaskForm({
   const supabase = createClient();
   const isEditing = !!task;
 
-  const getInitialDaySelectionMode = (): DaySelectionMode => {
-    if (!task) return 'single';
-    const days = task.days_of_week || [task.day_of_week];
-    if (days.length === 7) return 'all';
-    if (days.length > 1) return 'multiple';
-    return 'single';
-  };
-
   const getInitialSelectedDays = (): number[] => {
     if (!task) return [dayOfWeek];
     return task.days_of_week || [task.day_of_week];
@@ -56,94 +46,29 @@ export default function TaskForm({
   const [reminderTime, setReminderTime] = useState(task?.reminder_time || '');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  
-  const [daySelectionMode, setDaySelectionMode] = useState<DaySelectionMode>(getInitialDaySelectionMode());
   const [selectedDays, setSelectedDays] = useState<number[]>(getInitialSelectedDays());
-  
-  const [recurrenceType, setRecurrenceType] = useState<RecurrenceType>(
-    task?.recurrence_type || 'none'
-  );
-  const [recurrenceInterval, setRecurrenceInterval] = useState(
-    task?.recurrence_interval || 1
-  );
-  const [recurrenceDays, setRecurrenceDays] = useState<number[]>(
-    task?.recurrence_days || [dayOfWeek]
-  );
-  const [recurrenceEndDate, setRecurrenceEndDate] = useState(
-    task?.recurrence_end_date || ''
-  );
-  const [showRecurrenceOptions, setShowRecurrenceOptions] = useState(
-    task?.recurrence_type !== 'none' && task?.recurrence_type !== undefined
-  );
 
-  const handleDayModeChange = (mode: DaySelectionMode) => {
-    setDaySelectionMode(mode);
-    if (mode === 'all') {
-      setSelectedDays([...ALL_DAYS]);
-    } else if (mode === 'single' && selectedDays.length > 1) {
-      setSelectedDays([selectedDays[0]]);
-    }
-  };
-
+  // Toggle day selection
   const toggleDay = (day: number) => {
-    if (daySelectionMode === 'single') {
-      setSelectedDays([day]);
-    } else if (daySelectionMode === 'multiple') {
-      if (selectedDays.includes(day)) {
-        if (selectedDays.length > 1) {
-          setSelectedDays(selectedDays.filter(d => d !== day));
-        }
-      } else {
-        setSelectedDays([...selectedDays, day].sort());
-      }
-    }
-  };
-
-  const toggleRecurrenceDay = (day: number) => {
-    if (recurrenceDays.includes(day)) {
-      if (recurrenceDays.length > 1) {
-        setRecurrenceDays(recurrenceDays.filter(d => d !== day));
+    if (selectedDays.includes(day)) {
+      // Don't allow removing the last day
+      if (selectedDays.length > 1) {
+        setSelectedDays(selectedDays.filter(d => d !== day));
       }
     } else {
-      setRecurrenceDays([...recurrenceDays, day].sort());
+      setSelectedDays([...selectedDays, day].sort());
     }
   };
 
-  const getRecurrenceSummary = (): string => {
-    if (recurrenceType === 'none') return '';
-    
-    let summary = '';
-    const interval = recurrenceInterval > 1 ? `כל ${recurrenceInterval} ` : 'כל ';
-    
-    switch (recurrenceType) {
-      case 'daily':
-        summary = recurrenceInterval === 1 ? 'כל יום' : `כל ${recurrenceInterval} ימים`;
-        break;
-      case 'weekly':
-        summary = recurrenceInterval === 1 ? 'כל שבוע' : `${interval}שבועות`;
-        break;
-      case 'monthly':
-        summary = recurrenceInterval === 1 ? 'כל חודש' : `${interval}חודשים`;
-        break;
-      case 'custom':
-        const days = recurrenceDays.map(d => DAYS_SHORT[d]).join(', ');
-        summary = `בימים: ${days}`;
-        if (recurrenceInterval > 1) {
-          summary += ` (כל ${recurrenceInterval} שבועות)`;
-        }
-        break;
-    }
-    
-    if (recurrenceEndDate) {
-      summary += ` עד ${new Date(recurrenceEndDate).toLocaleDateString('he-IL')}`;
-    }
-    
-    return summary;
+  // Select all days
+  const selectAllDays = () => {
+    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
   };
 
+  // Get days summary for display
   const getDaysSummary = (): string => {
-    if (daySelectionMode === 'all') return 'כל השבוע';
-    if (selectedDays.length === 1) return DAYS_OF_WEEK[selectedDays[0]];
+    if (selectedDays.length === 7) return 'כל השבוע';
+    if (selectedDays.length === 1) return DAYS_SHORT[selectedDays[0]];
     return selectedDays.map(d => DAYS_SHORT[d]).join(', ');
   };
 
@@ -152,9 +77,6 @@ export default function TaskForm({
     if (!title.trim()) return;
 
     setLoading(true);
-
-    const isRecurring = recurrenceType !== 'none';
-    const daysToSave = daySelectionMode === 'all' ? ALL_DAYS : selectedDays;
     
     const taskData = {
       family_id: familyId,
@@ -162,14 +84,10 @@ export default function TaskForm({
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       category_id: categoryId || null,
-      day_of_week: daysToSave[0],
-      days_of_week: daysToSave,
+      day_of_week: selectedDays[0], // Keep for backward compatibility
+      days_of_week: selectedDays,
       week_start: weekStart,
-      is_recurring: isRecurring,
-      recurrence_type: recurrenceType,
-      recurrence_interval: recurrenceInterval,
-      recurrence_days: recurrenceType === 'custom' ? recurrenceDays : null,
-      recurrence_end_date: recurrenceEndDate || null,
+      is_recurring: false,
       reminder_time: reminderTime || null,
     };
 
@@ -248,48 +166,32 @@ export default function TaskForm({
           </div>
 
           {/* Day Selection */}
-          <div className="bg-slate-700/30 rounded-lg p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckSquare className="w-4 h-4 text-slate-400" />
-              <span className="text-sm font-medium text-slate-300">ימים</span>
-              <span className="text-xs text-slate-500">({getDaysSummary()})</span>
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-sm font-medium text-slate-300">
+                ימים ({getDaysSummary()})
+              </label>
+              <button
+                type="button"
+                onClick={selectAllDays}
+                className="text-xs text-violet-400 hover:text-violet-300"
+              >
+                כל השבוע
+              </button>
             </div>
-            
-            {/* Mode Tabs */}
-            <div className="grid grid-cols-3 gap-1 mb-2">
-              {(Object.keys(DAY_SELECTION_LABELS) as DaySelectionMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  type="button"
-                  onClick={() => handleDayModeChange(mode)}
-                  className={`py-1.5 text-xs font-medium rounded-md transition-colors ${
-                    daySelectionMode === mode
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                  }`}
-                >
-                  {DAY_SELECTION_LABELS[mode]}
-                </button>
-              ))}
-            </div>
-
-            {/* Day Buttons */}
             <div className="grid grid-cols-7 gap-1">
               {DAYS_SHORT.map((day, index) => {
                 const isSelected = selectedDays.includes(index);
-                const isDisabled = daySelectionMode === 'all';
-                
                 return (
                   <button
                     key={day}
                     type="button"
                     onClick={() => toggleDay(index)}
-                    disabled={isDisabled}
-                    className={`py-2 text-xs font-bold rounded-md transition-colors ${
+                    className={`py-2.5 text-xs font-bold rounded-lg transition-colors ${
                       isSelected
                         ? 'bg-violet-600 text-white'
                         : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                    } ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                    }`}
                   >
                     {day}
                   </button>
@@ -385,100 +287,6 @@ export default function TaskForm({
               placeholder="פרטים נוספים..."
               rows={2}
             />
-          </div>
-
-          {/* Recurrence Section */}
-          <div className="bg-slate-700/30 rounded-lg overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowRecurrenceOptions(!showRecurrenceOptions)}
-              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-slate-700/50 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <RotateCcw className={`w-4 h-4 ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-500'}`} />
-                <span className={`text-sm font-medium ${recurrenceType !== 'none' ? 'text-violet-400' : 'text-slate-300'}`}>
-                  {recurrenceType !== 'none' ? 'חזרה פעילה' : 'הגדרת חזרה'}
-                </span>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showRecurrenceOptions ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showRecurrenceOptions && (
-              <div className="px-3 pb-3 space-y-3">
-                {/* Recurrence Type */}
-                <div className="grid grid-cols-5 gap-1">
-                  {(Object.keys(RECURRENCE_LABELS) as RecurrenceType[]).map((type) => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setRecurrenceType(type)}
-                      className={`py-1.5 text-[10px] font-medium rounded-md transition-colors ${
-                        recurrenceType === type
-                          ? 'bg-violet-600 text-white'
-                          : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                      }`}
-                    >
-                      {RECURRENCE_LABELS[type]}
-                    </button>
-                  ))}
-                </div>
-
-                {recurrenceType !== 'none' && (
-                  <>
-                    {/* Interval */}
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-300">כל</span>
-                      <input
-                        type="number"
-                        min="1"
-                        max="99"
-                        value={recurrenceInterval}
-                        onChange={(e) => setRecurrenceInterval(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-14 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white text-center text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                      />
-                      <span className="text-sm text-slate-300">
-                        {recurrenceType === 'daily' && (recurrenceInterval === 1 ? 'יום' : 'ימים')}
-                        {recurrenceType === 'weekly' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
-                        {recurrenceType === 'monthly' && (recurrenceInterval === 1 ? 'חודש' : 'חודשים')}
-                        {recurrenceType === 'custom' && (recurrenceInterval === 1 ? 'שבוע' : 'שבועות')}
-                      </span>
-                    </div>
-
-                    {/* Custom Days */}
-                    {recurrenceType === 'custom' && (
-                      <div className="grid grid-cols-7 gap-1">
-                        {DAYS_SHORT.map((day, index) => (
-                          <button
-                            key={day}
-                            type="button"
-                            onClick={() => toggleRecurrenceDay(index)}
-                            className={`py-1.5 text-xs font-bold rounded-md transition-colors ${
-                              recurrenceDays.includes(index)
-                                ? 'bg-violet-600 text-white'
-                                : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
-                            }`}
-                          >
-                            {day}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* End Date */}
-                    <div>
-                      <label className="text-xs text-slate-400 mb-1 block">תאריך סיום (אופציונלי)</label>
-                      <input
-                        type="date"
-                        value={recurrenceEndDate}
-                        onChange={(e) => setRecurrenceEndDate(e.target.value)}
-                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
-                        dir="ltr"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Reminder */}

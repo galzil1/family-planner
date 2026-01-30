@@ -1,7 +1,7 @@
 'use client';
 
 import { createClient } from '@/lib/supabase';
-import { Check, RotateCcw, Layers } from 'lucide-react';
+import { Check, Layers } from 'lucide-react';
 import type { Task, User, Category } from '@/types';
 import { DAYS_SHORT } from '@/types';
 
@@ -33,28 +33,7 @@ export default function TaskCard({
       .eq('id', task.id);
   };
 
-  const getRecurrenceLabel = () => {
-    if (!task.recurrence_type || task.recurrence_type === 'none') {
-      return task.is_recurring ? 'חוזר' : null;
-    }
-    
-    const interval = task.recurrence_interval || 1;
-    
-    switch (task.recurrence_type) {
-      case 'daily':
-        return interval === 1 ? 'יומי' : `כל ${interval} ימים`;
-      case 'weekly':
-        return interval === 1 ? 'שבועי' : `כל ${interval} שבועות`;
-      case 'monthly':
-        return interval === 1 ? 'חודשי' : `כל ${interval} חודשים`;
-      case 'custom':
-        return 'מותאם';
-      default:
-        return null;
-    }
-  };
-
-  const recurrenceLabel = getRecurrenceLabel();
+  // Check if this is a multi-day task
   const isMultiDay = task.days_of_week && task.days_of_week.length > 1;
   const multiDayLabel = isMultiDay
     ? task.days_of_week!.length === 7
@@ -124,14 +103,6 @@ export default function TaskCard({
             <div className="flex items-center gap-1 mt-1">
               <Layers className="w-3 h-3 text-cyan-400" />
               <span className="text-[10px] text-cyan-400">{multiDayLabel}</span>
-            </div>
-          )}
-
-          {/* Recurring indicator */}
-          {recurrenceLabel && (
-            <div className="flex items-center gap-1 mt-1">
-              <RotateCcw className="w-3 h-3 text-violet-400" />
-              <span className="text-[10px] text-violet-400">{recurrenceLabel}</span>
             </div>
           )}
         </div>
