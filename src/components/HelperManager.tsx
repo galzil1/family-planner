@@ -20,7 +20,7 @@ export default function HelperManager({
   const supabase = createClient();
   const [showForm, setShowForm] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newColor, setNewColor] = useState(AVATAR_COLORS[0]);
+  const [newColor, setNewColor] = useState<string>(AVATAR_COLORS[0]);
   const [newNotes, setNewNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
