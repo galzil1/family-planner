@@ -120,13 +120,13 @@ export default function CalendarView({
     }
   };
 
-  // Get tasks for a specific date, handling recurrence
+  // Get tasks for a specific date, handling recurrence, sorted by time
   const getTasksForDate = (date: Date): Task[] => {
     const dayOfWeek = date.getDay();
     const weekStartStr = getWeekStartISO(date);
     const dateOfMonth = getDate(date);
     
-    return tasks.filter((task) => {
+    const filteredTasks = tasks.filter((task) => {
       const taskWeekStart = parseISO(task.week_start);
       const taskDateOfMonth = getDate(taskWeekStart) + task.day_of_week;
       
@@ -164,6 +164,16 @@ export default function CalendarView({
         default:
           return false;
       }
+    });
+
+    // Sort by time (tasks with time first, then by time, then tasks without time)
+    return filteredTasks.sort((a, b) => {
+      if (a.task_time && b.task_time) {
+        return a.task_time.localeCompare(b.task_time);
+      }
+      if (a.task_time && !b.task_time) return -1;
+      if (!a.task_time && b.task_time) return 1;
+      return 0;
     });
   };
 

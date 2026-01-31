@@ -179,7 +179,19 @@ export default function DashboardPage() {
     }
   };
   
-  const todayTasks = tasks.filter(t => taskAppearsOnDate(t, today));
+  // Helper to sort tasks by time
+  const sortByTime = (taskList: Task[]) => {
+    return [...taskList].sort((a, b) => {
+      if (a.task_time && b.task_time) {
+        return a.task_time.localeCompare(b.task_time);
+      }
+      if (a.task_time && !b.task_time) return -1;
+      if (!a.task_time && b.task_time) return 1;
+      return 0;
+    });
+  };
+
+  const todayTasks = sortByTime(tasks.filter(t => taskAppearsOnDate(t, today)));
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.completed).length;
@@ -193,8 +205,8 @@ export default function DashboardPage() {
       const futureDate = addDays(today, i);
       const futureDayOfWeek = futureDate.getDay();
       
-      const dayTasks = tasks.filter(t => 
-        taskAppearsOnDate(t, futureDate) && !t.completed
+      const dayTasks = sortByTime(
+        tasks.filter(t => taskAppearsOnDate(t, futureDate) && !t.completed)
       );
 
       if (dayTasks.length > 0) {
