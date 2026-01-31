@@ -2,12 +2,13 @@
 
 import { createClient } from '@/lib/supabase';
 import { Check, Clock, RotateCcw } from 'lucide-react';
-import type { Task, User, Category } from '@/types';
+import type { Task, User, Category, Helper } from '@/types';
 import { RECURRENCE_OPTIONS } from '@/types';
 
 interface TaskCardProps {
   task: Task;
   familyMembers: User[];
+  helpers?: Helper[];
   categories: Category[];
   onEdit: (task: Task) => void;
   onToggleComplete: (taskId: string, completed: boolean) => void;
@@ -16,13 +17,22 @@ interface TaskCardProps {
 export default function TaskCard({
   task,
   familyMembers,
+  helpers = [],
   categories,
   onEdit,
   onToggleComplete,
 }: TaskCardProps) {
   const supabase = createClient();
   const assignedUser = familyMembers.find((m) => m.id === task.assigned_to);
+  const assignedHelper = helpers.find((h) => h.id === task.helper_id);
   const category = categories.find((c) => c.id === task.category_id);
+
+  // Get assignee info (either user or helper)
+  const assignee = assignedUser 
+    ? { name: assignedUser.display_name, color: assignedUser.avatar_color, isHelper: false }
+    : assignedHelper 
+    ? { name: assignedHelper.name, color: assignedHelper.avatar_color, isHelper: true }
+    : null;
 
   const handleToggle = async () => {
     const newCompleted = !task.completed;
@@ -87,17 +97,21 @@ export default function TaskCard({
               </div>
             )}
             
-            {/* Assignee */}
-            {assignedUser && (
+            {/* Assignee (user or helper) */}
+            {assignee && (
               <div className="flex items-center gap-1">
                 <div
-                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
-                  style={{ backgroundColor: assignedUser.avatar_color }}
+                  className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white ${
+                    assignee.isHelper ? 'ring-1 ring-amber-400' : ''
+                  }`}
+                  style={{ backgroundColor: assignee.color }}
                 >
-                  {assignedUser.display_name.charAt(0).toUpperCase()}
+                  {assignee.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-[10px] text-slate-400 truncate">
-                  {assignedUser.display_name}
+                <span className={`text-[10px] truncate ${
+                  assignee.isHelper ? 'text-amber-400' : 'text-slate-400'
+                }`}>
+                  {assignee.name}
                 </span>
               </div>
             )}

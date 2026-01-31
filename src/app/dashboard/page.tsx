@@ -21,7 +21,7 @@ import { format, isToday, isTomorrow, addDays, parseISO, differenceInWeeks, getD
 import { getWeekStart } from '@/lib/date-utils';
 import { he } from 'date-fns/locale';
 
-import type { User, Family, Category, Task } from '@/types';
+import type { User, Family, Category, Task, Helper } from '@/types';
 import { DAYS_OF_WEEK } from '@/types';
 
 export default function DashboardPage() {
@@ -30,6 +30,7 @@ export default function DashboardPage() {
   const [family, setFamily] = useState<Family | null>(null);
   const [familyMembers, setFamilyMembers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const router = useRouter();
   const supabase = createClient();
@@ -83,6 +84,14 @@ export default function DashboardPage() {
         .order('name');
 
       setCategories(categoriesData || []);
+
+      const { data: helpersData } = await supabase
+        .from('helpers')
+        .select('*')
+        .eq('family_id', userData.family_id)
+        .order('name');
+
+      setHelpers(helpersData || []);
 
       // Fetch all tasks - filtering is done client-side to support recurrence
       const { data: tasksData } = await supabase
@@ -293,7 +302,10 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {todayTasks.map(task => {
                 const category = categories.find(c => c.id === task.category_id);
-                const assignee = familyMembers.find(m => m.id === task.assigned_to);
+                const assignedUser = familyMembers.find(m => m.id === task.assigned_to);
+                const assignedHelper = helpers.find(h => h.id === task.helper_id);
+                const assigneeName = assignedUser?.display_name || assignedHelper?.name;
+                const isHelper = !!assignedHelper;
                 
                 return (
                   <div
@@ -317,8 +329,8 @@ export default function DashboardPage() {
                       <p className={`font-medium text-sm sm:text-base ${task.completed ? 'text-slate-500 line-through' : 'text-white'}`}>
                         {category?.icon} {task.title}
                       </p>
-                      {assignee && (
-                        <p className="text-xs text-slate-400">{assignee.display_name}</p>
+                      {assigneeName && (
+                        <p className={`text-xs ${isHelper ? 'text-amber-400' : 'text-slate-400'}`}>{assigneeName}</p>
                       )}
                     </div>
 
@@ -407,6 +419,7 @@ export default function DashboardPage() {
       <FloatingAddButton
         familyId={family.id}
         familyMembers={familyMembers}
+        helpers={helpers}
         categories={categories}
         onTaskCreated={handleTaskCreated}
       />

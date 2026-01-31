@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import Header from '@/components/Header';
 import CategoryManager from '@/components/CategoryManager';
+import HelperManager from '@/components/HelperManager';
 import {
   requestNotificationPermission,
   getNotificationPermissionStatus,
 } from '@/lib/notifications';
 import { Bell, BellOff, User, Palette, Save, Loader2, Users, Copy, Check } from 'lucide-react';
 import { AVATAR_COLORS } from '@/types';
-import type { User as UserType, Family, Category } from '@/types';
+import type { User as UserType, Family, Category, Helper } from '@/types';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -21,6 +22,7 @@ export default function SettingsPage() {
   const [family, setFamily] = useState<Family | null>(null);
   const [familyMembers, setFamilyMembers] = useState<UserType[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -85,6 +87,14 @@ export default function SettingsPage() {
       .order('name');
 
     setCategories(categoriesData || []);
+
+    const { data: helpersData } = await supabase
+      .from('helpers')
+      .select('*')
+      .eq('family_id', userData.family_id)
+      .order('name');
+
+    setHelpers(helpersData || []);
 
     setLoading(false);
   };
@@ -311,6 +321,15 @@ export default function SettingsPage() {
             familyId={user.family_id!}
             categories={categories}
             onCategoriesChange={setCategories}
+          />
+        </section>
+
+        {/* Helpers Section */}
+        <section className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 mb-24 md:mb-6">
+          <HelperManager
+            familyId={user.family_id!}
+            helpers={helpers}
+            onHelpersChange={setHelpers}
           />
         </section>
       </main>

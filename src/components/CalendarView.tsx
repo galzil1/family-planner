@@ -10,7 +10,7 @@ import {
   getWeekStartISO,
   getWeekStart,
 } from '@/lib/date-utils';
-import type { Task, User, Family, Category, DayOfWeek, ViewMode } from '@/types';
+import type { Task, User, Family, Category, DayOfWeek, ViewMode, Helper } from '@/types';
 import { DAYS_SHORT, VIEW_MODE_OPTIONS } from '@/types';
 
 interface CalendarViewProps {
@@ -18,6 +18,7 @@ interface CalendarViewProps {
   family: Family;
   initialTasks: Task[];
   familyMembers: User[];
+  helpers?: Helper[];
   categories: Category[];
   onTasksChange?: () => void;
 }
@@ -27,6 +28,7 @@ export default function CalendarView({
   family,
   initialTasks,
   familyMembers,
+  helpers = [],
   categories,
   onTasksChange,
 }: CalendarViewProps) {
@@ -335,6 +337,7 @@ export default function CalendarView({
                     completedCount={completedCount}
                     viewMode={viewMode}
                     familyMembers={familyMembers}
+                    helpers={helpers}
                     categories={categories}
                     onAddTask={handleAddTask}
                     onEditTask={handleEditTask}
@@ -353,6 +356,7 @@ export default function CalendarView({
                 completedCount={completedCount}
                 viewMode={viewMode}
                 familyMembers={familyMembers}
+                helpers={helpers}
                 categories={categories}
                 onAddTask={handleAddTask}
                 onEditTask={handleEditTask}
@@ -368,6 +372,7 @@ export default function CalendarView({
         <TaskForm
           familyId={family.id}
           familyMembers={familyMembers}
+          helpers={helpers}
           categories={categories}
           weekStart={selectedDate ? getWeekStartISO(selectedDate) : getWeekStartISO(currentDate)}
           dayOfWeek={selectedDay}
@@ -395,6 +400,7 @@ interface DayCellProps {
   completedCount: number;
   viewMode: ViewMode;
   familyMembers: User[];
+  helpers: Helper[];
   categories: Category[];
   onAddTask: (date: Date) => void;
   onEditTask: (task: Task) => void;
@@ -408,6 +414,7 @@ function DayCell({
   completedCount,
   viewMode,
   familyMembers,
+  helpers,
   categories,
   onAddTask,
   onEditTask,
@@ -458,6 +465,7 @@ function DayCell({
               key={task.id}
               task={task}
               familyMembers={familyMembers}
+              helpers={helpers}
               categories={categories}
               onEdit={onEditTask}
               onToggleComplete={onToggleComplete}

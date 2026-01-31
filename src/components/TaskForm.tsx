@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { X, Trash2, Loader2, Clock, Save, Plus, RotateCcw } from 'lucide-react';
-import type { Task, User, Category, DayOfWeek, RecurrenceType } from '@/types';
+import type { Task, User, Category, DayOfWeek, RecurrenceType, Helper } from '@/types';
 import { DAYS_SHORT, RECURRENCE_OPTIONS } from '@/types';
 
 interface TaskFormProps {
   familyId: string;
   familyMembers: User[];
+  helpers?: Helper[];
   categories: Category[];
   weekStart: string;
   dayOfWeek: DayOfWeek;
@@ -22,6 +23,7 @@ interface TaskFormProps {
 export default function TaskForm({
   familyId,
   familyMembers,
+  helpers = [],
   categories,
   weekStart,
   dayOfWeek,
@@ -37,12 +39,29 @@ export default function TaskForm({
   const [title, setTitle] = useState(task?.title || '');
   const [notes, setNotes] = useState(task?.notes || '');
   const [assignedTo, setAssignedTo] = useState(task?.assigned_to || '');
+  const [helperId, setHelperId] = useState(task?.helper_id || '');
   const [categoryId, setCategoryId] = useState(task?.category_id || '');
   const [taskTime, setTaskTime] = useState(task?.task_time || '');
   const [recurrence, setRecurrence] = useState<RecurrenceType>(task?.recurrence_type || 'none');
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number>(task?.day_of_week ?? dayOfWeek);
+
+  // Handle assignee selection - clear helper when user selected and vice versa
+  const handleSelectUser = (userId: string) => {
+    setAssignedTo(userId);
+    setHelperId('');
+  };
+
+  const handleSelectHelper = (helperIdValue: string) => {
+    setHelperId(helperIdValue);
+    setAssignedTo('');
+  };
+
+  const handleSelectEveryone = () => {
+    setAssignedTo('');
+    setHelperId('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +74,7 @@ export default function TaskForm({
       title: title.trim(),
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
+      helper_id: helperId || null,
       category_id: categoryId || null,
       day_of_week: selectedDay,
       week_start: weekStart,
@@ -208,22 +228,25 @@ export default function TaskForm({
               אחראי
             </label>
             <div className="flex flex-wrap gap-2">
+              {/* Everyone option */}
               <button
                 type="button"
-                onClick={() => setAssignedTo('')}
+                onClick={handleSelectEveryone}
                 className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-95 ${
-                  !assignedTo
+                  !assignedTo && !helperId
                     ? 'bg-violet-600 text-white'
                     : 'bg-slate-700 text-slate-400 hover:bg-slate-600 active:bg-slate-500'
                 }`}
               >
                 כולם
               </button>
+              
+              {/* Family members */}
               {familyMembers.map((member) => (
                 <button
                   key={member.id}
                   type="button"
-                  onClick={() => setAssignedTo(member.id)}
+                  onClick={() => handleSelectUser(member.id)}
                   className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-95 ${
                     assignedTo === member.id
                       ? 'bg-violet-600 text-white'
@@ -239,6 +262,33 @@ export default function TaskForm({
                   {member.display_name}
                 </button>
               ))}
+              
+              {/* Helpers (non-user assignees) */}
+              {helpers.length > 0 && (
+                <>
+                  <div className="w-full border-t border-slate-700 my-1" />
+                  {helpers.map((helper) => (
+                    <button
+                      key={helper.id}
+                      type="button"
+                      onClick={() => handleSelectHelper(helper.id)}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-95 ${
+                        helperId === helper.id
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-slate-700 text-slate-400 hover:bg-slate-600 active:bg-slate-500'
+                      }`}
+                    >
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                        style={{ backgroundColor: helper.avatar_color }}
+                      >
+                        {helper.name.charAt(0).toUpperCase()}
+                      </div>
+                      {helper.name}
+                    </button>
+                  ))}
+                </>
+              )}
             </div>
           </div>
 

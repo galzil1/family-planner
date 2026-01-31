@@ -4,11 +4,12 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import TaskForm from './TaskForm';
 import { getWeekStartISO } from '@/lib/date-utils';
-import type { User, Category, Task, DayOfWeek } from '@/types';
+import type { User, Category, Task, DayOfWeek, Helper } from '@/types';
 
 interface FloatingAddButtonProps {
   familyId: string;
   familyMembers: User[];
+  helpers?: Helper[];
   categories: Category[];
   onTaskCreated: (task: Task) => void;
 }
@@ -16,6 +17,7 @@ interface FloatingAddButtonProps {
 export default function FloatingAddButton({
   familyId,
   familyMembers,
+  helpers = [],
   categories,
   onTaskCreated,
 }: FloatingAddButtonProps) {
@@ -44,6 +46,7 @@ export default function FloatingAddButton({
         <TaskForm
           familyId={familyId}
           familyMembers={familyMembers}
+          helpers={helpers}
           categories={categories}
           weekStart={weekStart}
           dayOfWeek={today}

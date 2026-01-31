@@ -23,6 +23,17 @@ export interface Category {
   created_at: string;
 }
 
+// Helper - a person who can be assigned tasks but doesn't have an account
+export interface Helper {
+  id: string;
+  family_id: string;
+  name: string;
+  avatar_color: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
 
 export const RECURRENCE_OPTIONS: { value: RecurrenceType; label: string }[] = [
@@ -45,7 +56,8 @@ export const VIEW_MODE_OPTIONS: { value: ViewMode; label: string }[] = [
 export interface Task {
   id: string;
   family_id: string;
-  assigned_to: string | null;
+  assigned_to: string | null; // User ID
+  helper_id: string | null; // Helper ID (non-user assignee)
   category_id: string | null;
   title: string;
   notes: string | null;

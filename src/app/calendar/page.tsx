@@ -8,7 +8,7 @@ import CalendarView from '@/components/CalendarView';
 import FloatingAddButton from '@/components/FloatingAddButton';
 import { Loader2 } from 'lucide-react';
 
-import type { User, Family, Category, Task } from '@/types';
+import type { User, Family, Category, Task, Helper } from '@/types';
 
 export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,7 @@ export default function CalendarPage() {
   const [family, setFamily] = useState<Family | null>(null);
   const [familyMembers, setFamilyMembers] = useState<User[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [helpers, setHelpers] = useState<Helper[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const router = useRouter();
@@ -71,6 +72,14 @@ export default function CalendarPage() {
 
       setCategories(categoriesData || []);
 
+      const { data: helpersData } = await supabase
+        .from('helpers')
+        .select('*')
+        .eq('family_id', userData.family_id)
+        .order('name');
+
+      setHelpers(helpersData || []);
+
       // Fetch all tasks - filtering is done client-side to support recurrence
       const { data: tasksData } = await supabase
         .from('tasks')
@@ -116,6 +125,7 @@ export default function CalendarPage() {
           user={user}
           family={family}
           familyMembers={familyMembers}
+          helpers={helpers}
           categories={categories}
           initialTasks={tasks}
           onTasksChange={loadData}
@@ -124,6 +134,7 @@ export default function CalendarPage() {
       <FloatingAddButton
         familyId={family.id}
         familyMembers={familyMembers}
+        helpers={helpers}
         categories={categories}
         onTaskCreated={handleTaskCreated}
       />
