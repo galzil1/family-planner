@@ -10,7 +10,7 @@ import {
   requestNotificationPermission,
   getNotificationPermissionStatus,
 } from '@/lib/notifications';
-import { Bell, BellOff, User, Palette, Save, Loader2, Users, Copy, Check } from 'lucide-react';
+import { Bell, BellOff, User, Palette, Save, Loader2, Users, Copy, Check, MessageCircle } from 'lucide-react';
 import { AVATAR_COLORS } from '@/types';
 import type { User as UserType, Family, Category, Helper } from '@/types';
 
@@ -29,6 +29,9 @@ export default function SettingsPage() {
   // Form state
   const [displayName, setDisplayName] = useState('');
   const [avatarColor, setAvatarColor] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [savingWhatsApp, setSavingWhatsApp] = useState(false);
+  const [whatsappSaved, setWhatsappSaved] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationStatus, setNotificationStatus] = useState<
     NotificationPermission | 'unsupported'
@@ -64,6 +67,7 @@ export default function SettingsPage() {
     setUser(userData);
     setDisplayName(userData.display_name);
     setAvatarColor(userData.avatar_color);
+    setWhatsappNumber(userData.whatsapp_number || '');
 
     const { data: familyData } = await supabase
       .from('families')
@@ -130,6 +134,39 @@ export default function SettingsPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleSaveWhatsApp = async () => {
+    if (!user) return;
+
+    setSavingWhatsApp(true);
+
+    // Format phone number - ensure it starts with + for international format
+    let formattedNumber = whatsappNumber.trim();
+    if (formattedNumber && !formattedNumber.startsWith('+')) {
+      // Assume Israeli number if no country code
+      if (formattedNumber.startsWith('0')) {
+        formattedNumber = '+972' + formattedNumber.substring(1);
+      } else {
+        formattedNumber = '+' + formattedNumber;
+      }
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        whatsapp_number: formattedNumber || null,
+      })
+      .eq('id', user.id);
+
+    if (!error) {
+      setUser({ ...user, whatsapp_number: formattedNumber || null });
+      setWhatsappNumber(formattedNumber);
+      setWhatsappSaved(true);
+      setTimeout(() => setWhatsappSaved(false), 2000);
+    }
+
+    setSavingWhatsApp(false);
   };
 
   if (loading || !user) {
@@ -206,6 +243,73 @@ export default function SettingsPage() {
               )}
               Save Profile
             </button>
+          </div>
+        </section>
+
+        {/* WhatsApp Section */}
+        <section className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-green-400" />
+            וואטסאפ
+          </h2>
+
+          <div className="space-y-4">
+            <p className="text-sm text-slate-400">
+              חבר את מספר הוואטסאפ שלך כדי לקבל תזכורות ולנהל משימות דרך הודעות.
+            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                מספר טלפון
+              </label>
+              <input
+                type="tel"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                placeholder="+972501234567 או 0501234567"
+                className="w-full px-4 py-2.5 bg-slate-900/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                dir="ltr"
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                הזן את המספר בפורמט בינלאומי או מקומי
+              </p>
+            </div>
+
+            <button
+              onClick={handleSaveWhatsApp}
+              disabled={savingWhatsApp}
+              className={`w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                whatsappSaved
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-green-600 text-white hover:bg-green-500'
+              }`}
+            >
+              {savingWhatsApp ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : whatsappSaved ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {whatsappSaved ? 'נשמר!' : 'שמור מספר'}
+            </button>
+
+            {user?.whatsapp_number && (
+              <div className="mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                <p className="text-sm text-green-400 font-medium mb-2">
+                  ✅ וואטסאפ מחובר
+                </p>
+                <p className="text-xs text-slate-400">
+                  שלח הודעה לבוט כדי לראות את המשימות שלך. פקודות זמינות:
+                </p>
+                <ul className="text-xs text-slate-400 mt-2 space-y-1">
+                  <li>• <code className="bg-slate-800 px-1 rounded">היום</code> - משימות להיום</li>
+                  <li>• <code className="bg-slate-800 px-1 rounded">מחר</code> - משימות למחר</li>
+                  <li>• <code className="bg-slate-800 px-1 rounded">הוסף [משימה]</code> - הוסף משימה חדשה</li>
+                  <li>• <code className="bg-slate-800 px-1 rounded">עזרה</code> - כל הפקודות</li>
+                </ul>
+              </div>
+            )}
           </div>
         </section>
 

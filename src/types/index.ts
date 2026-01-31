@@ -11,6 +11,7 @@ export interface User {
   email: string;
   display_name: string;
   avatar_color: string;
+  whatsapp_number: string | null;
   created_at: string;
 }
 
