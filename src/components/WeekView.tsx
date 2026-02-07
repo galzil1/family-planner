@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar } from 'lucide-react';
 import TaskCard from './TaskCard';
 import TaskForm from './TaskForm';
+import { parseISO, addDays } from 'date-fns';
 import {
   getWeekStartISO,
   getNextWeekStart,
@@ -36,6 +37,7 @@ export default function WeekView({
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingOccurrenceDate, setEditingOccurrenceDate] = useState<Date | null>(null);
 
   const goToNextWeek = () => {
     setWeekStart(getNextWeekStart(weekStart));
@@ -65,8 +67,9 @@ export default function WeekView({
     setShowTaskForm(true);
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = (task: Task, occurrenceDate?: Date | null) => {
     setEditingTask(task);
+    setEditingOccurrenceDate(occurrenceDate ?? null);
     setSelectedDay(task.day_of_week as DayOfWeek);
     setShowTaskForm(true);
   };
@@ -202,6 +205,7 @@ export default function WeekView({
                       task={task}
                       familyMembers={familyMembers}
                       categories={categories}
+                      occurrenceDate={addDays(parseISO(weekStart), index)}
                       onEdit={handleEditTask}
                       onToggleComplete={handleToggleComplete}
                     />
@@ -236,10 +240,12 @@ export default function WeekView({
           weekStart={weekStart}
           dayOfWeek={selectedDay}
           task={editingTask}
+          occurrenceDate={editingOccurrenceDate}
           onClose={() => {
             setShowTaskForm(false);
             setSelectedDay(null);
             setEditingTask(null);
+            setEditingOccurrenceDate(null);
           }}
           onCreated={handleTaskCreated}
           onUpdated={handleTaskUpdated}

@@ -39,6 +39,7 @@ export default function CalendarView({
   const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingOccurrenceDate, setEditingOccurrenceDate] = useState<Date | null>(null);
 
   // Update tasks when initialTasks changes
   useEffect(() => {
@@ -166,8 +167,20 @@ export default function CalendarView({
       }
     });
 
+    // Exclude recurring tasks that have an exception (one-off) for this date
+    const withExceptionsExcluded = filteredTasks.filter((task) => {
+      if (!task.recurrence_type || task.recurrence_type === 'none') return true;
+      const hasException = tasks.some(
+        (e) =>
+          e.parent_task_id === task.id &&
+          e.week_start === weekStartStr &&
+          e.day_of_week === dayOfWeek
+      );
+      return !hasException;
+    });
+
     // Sort by time (tasks with time first, then by time, then tasks without time)
-    return filteredTasks.sort((a, b) => {
+    return withExceptionsExcluded.sort((a, b) => {
       if (a.task_time && b.task_time) {
         return a.task_time.localeCompare(b.task_time);
       }
@@ -184,8 +197,9 @@ export default function CalendarView({
     setShowTaskForm(true);
   };
 
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = (task: Task, occurrenceDate?: Date | null) => {
     setEditingTask(task);
+    setEditingOccurrenceDate(occurrenceDate ?? null);
     setSelectedDay(task.day_of_week as DayOfWeek);
     setSelectedDate(null);
     setShowTaskForm(true);
@@ -387,11 +401,13 @@ export default function CalendarView({
           weekStart={selectedDate ? getWeekStartISO(selectedDate) : getWeekStartISO(currentDate)}
           dayOfWeek={selectedDay}
           task={editingTask}
+          occurrenceDate={editingOccurrenceDate}
           onClose={() => {
             setShowTaskForm(false);
             setSelectedDay(null);
             setSelectedDate(null);
             setEditingTask(null);
+            setEditingOccurrenceDate(null);
           }}
           onCreated={handleTaskCreated}
           onUpdated={handleTaskUpdated}
@@ -413,7 +429,7 @@ interface DayCellProps {
   helpers: Helper[];
   categories: Category[];
   onAddTask: (date: Date) => void;
-  onEditTask: (task: Task) => void;
+  onEditTask: (task: Task, occurrenceDate?: Date | null) => void;
   onToggleComplete: (taskId: string, completed: boolean) => void;
 }
 
@@ -477,6 +493,7 @@ function DayCell({
               familyMembers={familyMembers}
               helpers={helpers}
               categories={categories}
+              occurrenceDate={date}
               onEdit={onEditTask}
               onToggleComplete={onToggleComplete}
             />

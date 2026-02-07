@@ -71,6 +71,8 @@ export interface Task {
   reminder_time: string | null;
   created_at: string;
   updated_at: string;
+  // When set, this task is a one-off "exception" replacing one occurrence of the recurring parent
+  parent_task_id?: string | null;
   // Deprecated - kept for backward compatibility with existing data
   days_of_week?: number[] | null;
 }

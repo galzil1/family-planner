@@ -139,6 +139,19 @@ export default function DashboardPage() {
   const today = new Date();
   const todayDayOfWeek = today.getDay();
   
+  // Recurring task has an exception (one-off) on this date — don't show the series on that date
+  const hasExceptionOnDate = (task: Task, date: Date): boolean => {
+    if (!task.recurrence_type || task.recurrence_type === 'none') return false;
+    const weekStartStr = getWeekStartISO(date);
+    const dayOfWeek = date.getDay();
+    return tasks.some(
+      (e) =>
+        e.parent_task_id === task.id &&
+        e.week_start === weekStartStr &&
+        e.day_of_week === dayOfWeek
+    );
+  };
+
   // Helper function to check if a task should appear on a given date
   const taskAppearsOnDate = (task: Task, date: Date): boolean => {
     const dayOfWeek = date.getDay();
@@ -191,7 +204,9 @@ export default function DashboardPage() {
     });
   };
 
-  const todayTasks = sortByTime(tasks.filter(t => taskAppearsOnDate(t, today)));
+  const todayTasks = sortByTime(
+    tasks.filter((t) => taskAppearsOnDate(t, today) && !hasExceptionOnDate(t, today))
+  );
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.completed).length;
@@ -206,7 +221,12 @@ export default function DashboardPage() {
       const futureDayOfWeek = futureDate.getDay();
       
       const dayTasks = sortByTime(
-        tasks.filter(t => taskAppearsOnDate(t, futureDate) && !t.completed)
+        tasks.filter(
+          (t) =>
+            taskAppearsOnDate(t, futureDate) &&
+            !t.completed &&
+            !hasExceptionOnDate(t, futureDate)
+        )
       );
 
       if (dayTasks.length > 0) {

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { X, Trash2, Loader2, Clock, Save, Plus, RotateCcw } from 'lucide-react';
+import { X, Trash2, Loader2, Clock, Save, Plus, RotateCcw, Calendar, CalendarDays } from 'lucide-react';
 import type { Task, User, Category, DayOfWeek, RecurrenceType, Helper } from '@/types';
 import { DAYS_SHORT, RECURRENCE_OPTIONS } from '@/types';
+import { getWeekStartISO } from '@/lib/date-utils';
 
 interface TaskFormProps {
   familyId: string;
@@ -14,6 +15,8 @@ interface TaskFormProps {
   weekStart: string;
   dayOfWeek: DayOfWeek;
   task: Task | null;
+  /** When editing a recurring task, the date of the occurrence being edited (for "this event only") */
+  occurrenceDate?: Date | null;
   onClose: () => void;
   onCreated: (task: Task) => void;
   onUpdated: (task: Task) => void;
@@ -28,6 +31,7 @@ export default function TaskForm({
   weekStart,
   dayOfWeek,
   task,
+  occurrenceDate = null,
   onClose,
   onCreated,
   onUpdated,
@@ -35,6 +39,7 @@ export default function TaskForm({
 }: TaskFormProps) {
   const supabase = createClient();
   const isEditing = !!task;
+  const isRecurring = !!(task?.recurrence_type && task.recurrence_type !== 'none');
 
   const [title, setTitle] = useState(task?.title || '');
   const [notes, setNotes] = useState(task?.notes || '');
@@ -46,6 +51,7 @@ export default function TaskForm({
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number>(task?.day_of_week ?? dayOfWeek);
+  const [showRecurrenceScopeStep, setShowRecurrenceScopeStep] = useState(false);
 
   // Handle assignee selection - clear helper when user selected and vice versa
   const handleSelectUser = (userId: string) => {
@@ -63,50 +69,118 @@ export default function TaskForm({
     setHelperId('');
   };
 
+  const taskData = () => ({
+    family_id: familyId,
+    title: title.trim(),
+    notes: notes.trim() || null,
+    assigned_to: assignedTo || null,
+    helper_id: helperId || null,
+    category_id: categoryId || null,
+    day_of_week: selectedDay,
+    week_start: weekStart,
+    is_recurring: recurrence !== 'none',
+    recurrence_type: recurrence,
+    task_time: taskTime || null,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
+    // When editing a recurring task, ask scope before applying
+    if (isEditing && task && isRecurring) {
+      setShowRecurrenceScopeStep(true);
+      return;
+    }
+
     setLoading(true);
-    
-    const taskData = {
+    const data = taskData();
+
+    if (isEditing && task) {
+      const { data: updated, error } = await supabase
+        .from('tasks')
+        .update(data)
+        .eq('id', task.id)
+        .select()
+        .single();
+
+      if (!error && updated) {
+        onUpdated(updated);
+      }
+    } else {
+      const { data: created, error } = await supabase
+        .from('tasks')
+        .insert({ ...data, completed: false })
+        .select()
+        .single();
+
+      if (!error && created) {
+        onCreated(created);
+      }
+    }
+
+    setLoading(false);
+  };
+
+  const getOccurrenceWeekAndDay = (): { week_start: string; day_of_week: number } => {
+    if (occurrenceDate) {
+      return {
+        week_start: getWeekStartISO(occurrenceDate),
+        day_of_week: occurrenceDate.getDay(),
+      };
+    }
+    if (task) {
+      return { week_start: task.week_start, day_of_week: task.day_of_week };
+    }
+    return { week_start: weekStart, day_of_week: selectedDay };
+  };
+
+  const handleApplyThisEventOnly = async () => {
+    if (!task || !title.trim()) return;
+    setLoading(true);
+    const { week_start, day_of_week } = getOccurrenceWeekAndDay();
+    const oneOffData = {
       family_id: familyId,
       title: title.trim(),
       notes: notes.trim() || null,
       assigned_to: assignedTo || null,
       helper_id: helperId || null,
       category_id: categoryId || null,
-      day_of_week: selectedDay,
-      week_start: weekStart,
-      is_recurring: recurrence !== 'none',
-      recurrence_type: recurrence,
+      day_of_week,
+      week_start,
+      is_recurring: false,
+      recurrence_type: 'none' as RecurrenceType,
       task_time: taskTime || null,
+      parent_task_id: task.id,
     };
-
-    if (isEditing && task) {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(taskData)
-        .eq('id', task.id)
-        .select()
-        .single();
-
-      if (!error && data) {
-        onUpdated(data);
-      }
-    } else {
-      const { data, error } = await supabase
-        .from('tasks')
-        .insert({ ...taskData, completed: false })
-        .select()
-        .single();
-
-      if (!error && data) {
-        onCreated(data);
-      }
-    }
-
+    const { data: created, error } = await supabase
+      .from('tasks')
+      .insert({ ...oneOffData, completed: false })
+      .select()
+      .single();
     setLoading(false);
+    if (!error && created) {
+      onCreated(created);
+      setShowRecurrenceScopeStep(false);
+      onClose();
+    }
+  };
+
+  const handleApplyAll = async () => {
+    if (!task || !title.trim()) return;
+    setLoading(true);
+    const { data: updated, error } = await supabase
+      .from('tasks')
+      .update(taskData())
+      .eq('id', task.id)
+      .select()
+      .single();
+    setLoading(false);
+    if (!error && updated) {
+      onUpdated(updated);
+      setShowRecurrenceScopeStep(false);
+      onClose();
+    }
   };
 
   const handleDelete = async () => {
@@ -342,7 +416,44 @@ export default function TaskForm({
           </div>
         </form>
 
+        {/* Recurrence scope step - when editing recurring task */}
+        {showRecurrenceScopeStep && (
+          <div className="sticky bottom-0 p-5 pt-4 border-t border-slate-700 bg-slate-800 safe-area-pb space-y-3">
+            <p className="text-sm font-medium text-slate-300 text-center">
+              להחיל את השינוי:
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleApplyThisEventOnly}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-slate-700 text-slate-200 hover:bg-slate-600 active:bg-slate-500 disabled:opacity-50 transition-colors"
+              >
+                <Calendar className="w-5 h-5" />
+                האירוע הזה בלבד
+              </button>
+              <button
+                type="button"
+                onClick={handleApplyAll}
+                disabled={loading}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-violet-600 text-white hover:bg-violet-500 active:bg-violet-400 disabled:opacity-50 transition-colors"
+              >
+                <CalendarDays className="w-5 h-5" />
+                כל הסדרה מעכשיו
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRecurrenceScopeStep(false)}
+              className="w-full py-2 text-sm text-slate-400 hover:text-white"
+            >
+              חזרה
+            </button>
+          </div>
+        )}
+
         {/* Actions - Fixed at bottom */}
+        {!showRecurrenceScopeStep && (
         <div className="sticky bottom-0 flex gap-3 p-5 pt-4 border-t border-slate-700 bg-slate-800 safe-area-pb">
           {isEditing && (
             <button
@@ -385,6 +496,7 @@ export default function TaskForm({
             {isEditing ? 'שמור' : 'צור'}
           </button>
         </div>
+        )}
       </div>
     </div>
   );

@@ -10,7 +10,9 @@ interface TaskCardProps {
   familyMembers: User[];
   helpers?: Helper[];
   categories: Category[];
-  onEdit: (task: Task) => void;
+  /** When in a day cell, the date of that cell (for recurrence scope when editing) */
+  occurrenceDate?: Date | null;
+  onEdit: (task: Task, occurrenceDate?: Date | null) => void;
   onToggleComplete: (taskId: string, completed: boolean) => void;
 }
 
@@ -19,6 +21,7 @@ export default function TaskCard({
   familyMembers,
   helpers = [],
   categories,
+  occurrenceDate = null,
   onEdit,
   onToggleComplete,
 }: TaskCardProps) {
@@ -50,7 +53,7 @@ export default function TaskCard({
           ? 'bg-slate-700/20 opacity-50'
           : 'bg-slate-700/40 hover:bg-slate-700/60'
       }`}
-      onClick={() => onEdit(task)}
+      onClick={() => onEdit(task, occurrenceDate)}
     >
       {/* Category indicator */}
       {category && (
