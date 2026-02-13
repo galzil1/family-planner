@@ -1,6 +1,6 @@
 # Family Planner 📅
 
-A simple, intuitive weekly planning app for families. Organize tasks, assign responsibilities, and stay on track together.
+A simple, intuitive weekly planning app for families. Organize tasks, assign responsibilities, and stay on track together. (Deploy trigger.)
 
 ![Family Planner](https://img.shields.io/badge/Next.js-15-black?style=flat-square)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square)
