@@ -133,11 +133,12 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const currentTime = format(now, 'HH:mm');
   const today = now;
-  
-  // Buffer: check for tasks starting in the next 15 minutes
+
+  // Reminders only fire for tasks whose task_time falls in the next 15 minutes. With daily
+  // cron (Vercel Hobby: 0 9 * * *), only tasks between 09:00 and 09:15 get reminders.
   const reminderWindow = 15;
   const reminderTimeEnd = format(addMinutes(now, reminderWindow), 'HH:mm');
-  
+
   console.log(`Running notification job at ${currentTime}, checking until ${reminderTimeEnd}`);
   
   try {

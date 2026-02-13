@@ -78,6 +78,28 @@ Make sure to set these in your Vercel project settings:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (for WhatsApp API routes and cron)
+
+### WhatsApp Integration
+
+The app can receive commands and send task reminders via WhatsApp (Twilio).
+
+**Connecting your number:** In the app, go to **Settings** and add your WhatsApp number (e.g. +972…). Only numbers saved there can use the bot; send `register` or `עזרה` in WhatsApp for instructions if you haven’t linked yet.
+
+**Environment variables:** In addition to Supabase vars, set:
+
+- `TWILIO_ACCOUNT_SID` – from [Twilio Console](https://console.twilio.com)
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_WHATSAPP_NUMBER` – e.g. `whatsapp:+14155238886` (sandbox or production)
+- `CRON_SECRET` – random string; cron calls the notify endpoint with `Authorization: Bearer <CRON_SECRET>`
+
+**Twilio setup:** In Twilio, configure your WhatsApp sandbox or number so the webhook URL for incoming messages is:
+
+`https://<your-vercel-domain>/api/whatsapp/webhook`
+
+**Cron (reminders):** Vercel runs the notify job once per day at 9:00 (`vercel.json`). On the Hobby plan, reminders are only sent for tasks whose start time falls in the **09:00–09:15** window; other times are not checked. Upgrade to Vercel Pro to use a cron every 15 minutes so reminders work for any task time.
+
+**Database:** Run `supabase-add-whatsapp.sql` in the Supabase SQL Editor so `users.whatsapp_number` and the `notification_log` table exist.
 
 ## Database Schema
 
@@ -170,3 +192,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 MIT License - feel free to use this for your own family planning needs!
+
+
+***TEST***

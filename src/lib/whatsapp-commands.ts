@@ -382,8 +382,9 @@ export function handleHelpCommand(): string {
 • \`הוסף [משימה]\` / \`add [task]\` - הוסף משימה חדשה
 • \`סיום [משימה]\` / \`done [task]\` - סמן משימה כהושלמה
 
-❓ *עזרה:*
+❓ *עזרה והתחברות:*
 • \`עזרה\` / \`help\` - הצג פקודות
+• \`הרשמה\` / \`register\` - הוראות חיבור מספר וואטסאפ
 
 💡 *דוגמאות:*
 • הוסף קניות בסופר
@@ -408,6 +409,19 @@ export function handleUnregisteredUser(): string {
 3. הוסף את מספר הוואטסאפ שלך
 
 לאחר מכן תוכל לשלוח פקודות כאן! 🎉`;
+}
+
+/** Register command: show how to link WhatsApp number in app Settings (same as unregistered). */
+export async function handleRegisterCommand(_phoneNumber: string): Promise<string> {
+  const base = handleUnregisteredUser();
+  const host =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+  if (host) {
+    const settingsUrl = host.startsWith('http') ? `${host}/settings` : `https://${host}/settings`;
+    return `${base}\n\n🔗 ${settingsUrl}`;
+  }
+  return base;
 }
 
 // Main command processor
@@ -439,6 +453,8 @@ export async function processCommand(phoneNumber: string, message: string): Prom
       return handleDoneCommand(user, command.args);
     case 'help':
       return handleHelpCommand();
+    case 'register':
+      return handleRegisterCommand(phoneNumber);
     default:
       return handleUnknownCommand(message);
   }
