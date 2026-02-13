@@ -1,8 +1,13 @@
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import { format, addDays } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { getWeekStart, getWeekStartISO } from '@/lib/date-utils';
 import type { Task, User, Category, Helper, DAYS_OF_WEEK } from '@/types';
+
+// Supabase client for server-side API routes (no cookies)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Command types
 export type CommandType = 
@@ -87,8 +92,6 @@ export function parseCommand(message: string): ParsedCommand {
 
 // Get user by WhatsApp number
 export async function getUserByWhatsApp(phoneNumber: string): Promise<User | null> {
-  const supabase = await createClient();
-  
   // Remove whatsapp: prefix if present
   const cleanNumber = phoneNumber.replace('whatsapp:', '');
   
@@ -143,7 +146,6 @@ function taskAppearsOnDate(task: Task, date: Date): boolean {
 
 // Command handlers
 export async function handleStatusCommand(user: User): Promise<string> {
-  const supabase = await createClient();
   const today = new Date();
   
   // Fetch all tasks for the family
@@ -211,7 +213,6 @@ export async function handleStatusCommand(user: User): Promise<string> {
 }
 
 export async function handleTomorrowCommand(user: User): Promise<string> {
-  const supabase = await createClient();
   const tomorrow = addDays(new Date(), 1);
   
   const { data: tasks } = await supabase
@@ -256,7 +257,6 @@ export async function handleTomorrowCommand(user: User): Promise<string> {
 }
 
 export async function handleWeekCommand(user: User): Promise<string> {
-  const supabase = await createClient();
   const today = new Date();
   const weekStart = getWeekStart(today);
   
@@ -293,7 +293,6 @@ export async function handleWeekCommand(user: User): Promise<string> {
 }
 
 export async function handleAddCommand(user: User, taskTitle: string): Promise<string> {
-  const supabase = await createClient();
   const today = new Date();
   const weekStart = getWeekStartISO(today);
   const dayOfWeek = today.getDay();
@@ -332,7 +331,6 @@ export async function handleAddCommand(user: User, taskTitle: string): Promise<s
 }
 
 export async function handleDoneCommand(user: User, searchText: string): Promise<string> {
-  const supabase = await createClient();
   const today = new Date();
   
   // Find tasks matching the search text
