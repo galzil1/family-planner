@@ -9,6 +9,11 @@ import { he } from 'date-fns/locale';
 import { getWeekStart, getWeekStartISO } from '@/lib/date-utils';
 import type { Task, User, Category, Helper, DAYS_OF_WEEK } from '@/types';
 
+// Supabase client for server-side API routes (no cookies)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Command types
 export type CommandType = 
   | 'status' 
