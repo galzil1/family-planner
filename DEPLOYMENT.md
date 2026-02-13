@@ -26,9 +26,10 @@ git push -u origin main
 1. היכנס ל-[vercel.com](https://vercel.com) והתחבר עם GitHub
 2. לחץ על "Add New Project"
 3. בחר את ה-repository `family-planner`
-4. **חשוב!** הוסף Environment Variables:
+4. **חשוב!** הוסף Environment Variables (Production, Preview, Development):
    - `NEXT_PUBLIC_SUPABASE_URL` = `https://byxajhtidgrurslvinqw.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = (העתק מקובץ .env.local)
+   - `SUPABASE_SERVICE_ROLE_KEY` = (העתק מ-Supabase Dashboard → Settings → API → service_role; נדרש ל-WhatsApp API)
 5. לחץ "Deploy"
 
 ## שלב 3: עדכון Supabase
@@ -61,6 +62,23 @@ git push -u origin main
 2. לחץ על שלוש הנקודות (תפריט)
 3. בחר "Add to Home Screen" או "Install App"
 4. לחץ "Install"
+
+---
+
+## יישור הפרודקשן עם main (Redeploy)
+
+אם הקומיטים האחרונים לא עלו לפרודקשן (למשל בגלל כישלון בדפלוי):
+
+1. **בדוק משתני סביבה ב-Vercel**  
+   Vercel → הפרויקט → Settings → Environment Variables. וודא ש-Production כולל:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (מ-Supabase → Settings → API → service_role)
+
+2. **הפעלת דפלוי מחדש**  
+   Vercel → Deployments → בחר את הדפלוי האחרון (או את ה-commit הרלוונטי) → ⋮ → **Redeploy** → "Redeploy" (ללא cache אם יש בעיות).
+
+   לחלופין: דחיפת קומיט חדש ל-`main` מפעילה דפלוי אוטומטי.
 
 ---
 
