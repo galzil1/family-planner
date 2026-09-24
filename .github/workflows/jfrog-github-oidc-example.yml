@@ -1,23 +1,28 @@
 name: "Setup JFrog CLI OIDC Example"
-on: push
+on: workflow_dispatch
 
 permissions:
   # This is required for requesting the OIDC token
   id-token: write
   # This is required for actions/checkout
   contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         env:
           JF_URL: ${{ vars.JF_URL }}
         with:
           oidc-provider-name: galzil1/family-planner@github
+          # The JFrog Job Summary is generated automatically by default in v4, 
+          # but setting it explicitly ensures it stays enabled.
+          disable-job-summary: false
 
       - name: Run JFrog CLI
         run: |
