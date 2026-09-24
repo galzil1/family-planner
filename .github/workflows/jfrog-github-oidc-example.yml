@@ -24,7 +24,7 @@ jobs:
           # but setting it explicitly ensures it stays enabled.
           disable-job-summary: false
 
-      - name: Run JFrog CLI
+      - name: Dummy upload for Job Summary
         run: |
-          # Ping the server
-          jf rt ping
+          echo "dummy artifact from GitHub Actions" > dummy.txt
+          jf rt upload dummy.txt generic-local/family-planner/${{ github.run_id }}/
